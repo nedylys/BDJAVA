@@ -256,6 +256,79 @@ CREATE TABLE LigneCommandeContenant(
         ON DELETE Cascade
 );
 
+CREATE TABLE CommandeàLivrer(
+    idCommande INT Primary KEY,
+    StatutCommandeL VARCHAR(30),
+    FraisLivraison FLOAT,
+    DateLivraisonEstimée DATE,
+    AdresseLivraison VARCHAR(255),
+
+    CONSTRAINT fk_commande_livrer_commande
+        FOREIGN KEY (idCommande) 
+        REFERENCES Commande(idCommande)
+        ON DELETE Cascade,
+
+    CONSTRAINT fk_commande_livrer_adresse
+        FOREIGN KEY (AdresseLivraison) 
+        REFERENCES AdresseLivraison(AdresseLivraison)
+        ON DELETE Cascade
+)
+
+CREATE TABLE CommandeenBoutique(
+    idCommande INT Primary KEY,
+    StatutCommandeB VARCHAR(30),
+
+    CONSTRAINT fk_commande_boutique_commande
+        FOREIGN KEY (idCommande) 
+        REFERENCES Commande(idCommande)
+        ON DELETE Cascade
+);
+
+CREATE TABLE PerteProduit(
+    idPerteP INT,
+    idProduit INT,
+    DatePerteP DATE,
+    QuantitéPerdueP FLOAT,
+    NaturePerteP VARCHAR(255),
+
+    PRIMARY KEY (idPerteP, idProduit),
+    CONSTRAINT fk_perte_produit
+        FOREIGN KEY (idProduit) 
+        REFERENCES Produit(idProduit)
+        ON DELETE Cascade
+);
+
+CREATE TABLE PerteContenant(
+    idPerteC INT,
+    idContenant INT,
+    DatePerteC DATE,
+    QuantitéPerdueC INT,
+    NaturePerteC VARCHAR(255),
+
+    PRIMARY KEY (idPerteC, idContenant),
+    CONSTRAINT fk_perte_contenant
+        FOREIGN KEY (idContenant) 
+        REFERENCES Contenant(idContenant)
+        ON DELETE Cascade
+);
+
+CREATE TABLE ProduitStock(
+    idProduit INT PRIMARY KEY,
+    CONSTRAINT fk_produit_stock
+        FOREIGN KEY (idProduit) 
+        REFERENCES Produit(idProduit)
+        ON DELETE Cascade
+)
+
+CREATE TABLE ProduitCommande(
+    idProduit INT PRIMARY KEY,
+    DélaiDisponibilitéHeure FLOAT,
+    CONSTRAINT fk_produit_commande
+        FOREIGN KEY (idProduit) 
+        REFERENCES Produit(idProduit)
+        ON DELETE Cascade
+)
+
 -- DROP TABLE ProducteurAPourActivité;
 -- DROP TABLE Producteur;
 -- DROP TABLE Activité;
