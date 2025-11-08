@@ -9,11 +9,17 @@ public class StatementCommande{
     
     static final String STSaison = "select DateDebut,DateFin from ProduitAPourSaison where idProduit = ?";
     
-    static final String STVerifieID = "select idProduit from Produit where idProduit = ?"; 
+    static final String STVerifieIDProduit = "select idProduit from Produit where idProduit = ?"; 
+
+    static final String STVerifieIDContenant = "select idContenant from Contenant where idContenant = ?"; 
 
     static final String STQteStock = "select sum(PoidsUnitaire*QuantitéDisponibleP) from LotProduit where idProduit = ?";
     
-    static final String STPrix = "select PrixVentePTTC from LotProduit where idProduit = ?";
+    static final String STQteContenant = "select sum(QuantitéDisponibleC) from LotContenant where idContenant = ?";
+    
+    static final String STPrixProduit = "select PrixVentePTTC from LotProduit where idProduit = ?";
+
+    static final String STPrixContenant = "select PrixVenteCTTC from LotContenant where idContenant = ?";
     
     private Connection conn;
     
@@ -21,10 +27,10 @@ public class StatementCommande{
         this.conn = conn;
     }
    
-    public double calculeprix(int idProduit, double quantite){
+    public double calculePrixProduit(int idProduit, double quantite){
         // Retourne le prix d'une commande d'un produit
         try{
-        PreparedStatement stmt = conn.prepareStatement(STPrix);
+        PreparedStatement stmt = conn.prepareStatement(STPrixProduit);
         stmt.setInt(1, idProduit);
         ResultSet rset = stmt.executeQuery();
         rset.next();
@@ -32,6 +38,23 @@ public class StatementCommande{
         rset.close();
         stmt.close();
         return prix*quantite;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    }
+    public double calculePrixContenant(int idContenant, int quantite){
+        // Retourne le prix d'une commande d'un contenant
+        try{
+            PreparedStatement stmt = conn.prepareStatement(STPrixContenant);
+            stmt.setInt(1, idContenant);
+            ResultSet rset = stmt.executeQuery();
+            rset.next();
+            double prix = rset.getDouble(1);
+            rset.close();
+            stmt.close();
+            return prix*quantite;
       }catch (SQLException e) {
             System.err.println("failed");
             e.printStackTrace(System.err);
@@ -112,10 +135,11 @@ public class StatementCommande{
             return false;
         }
     }
-    public boolean verifieIdProduit(int idProduit){
+    public boolean verifieIdProduit(int id){
+    // Verifie que l'idProduit ou idContenant existe dans la base de données.
         try{
-            PreparedStatement stmt = conn.prepareStatement(STVerifieID);
-            stmt.setInt(1, idProduit);
+            PreparedStatement stmt = conn.prepareStatement(STVerifieIDProduit);
+            stmt.setInt(1, id);
             ResultSet rset = stmt.executeQuery();
             if (rset.next()){
                 rset.close();
@@ -133,4 +157,49 @@ public class StatementCommande{
             return false;
         }
     }
+    public boolean verfieIdContenant(int idContenant){
+    // Verifie que l'idContenant existe dans la base de données.
+        try{
+            PreparedStatement stmt = conn.prepareStatement(STVerifieIDContenant);
+            stmt.setInt(1, idContenant);
+            ResultSet rset = stmt.executeQuery();
+            if (rset.next()){
+                rset.close();
+                stmt.close();
+                return true;
+            }else{
+                System.out.println("L'IdContenant est faux");
+                rset.close();
+                stmt.close();
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return false;
+        } 
+    }
+    public boolean getDispoContenant(int idContenant,int quantite){
+    // Verfie si le contenant peut être obtenu
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STQteContenant);
+        stmt.setInt(1, idContenant);
+        ResultSet rset = stmt.executeQuery();
+        rset.next();
+        double qtedispo = rset.getDouble(1);
+        rset.close();
+        stmt.close();
+        if (qtedispo < quantite){
+            System.out.println("Quantité insuffisante");
+            return false;
+        }else{
+            return true;
+        }
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return false;
+      }
+    }
+    
 }
