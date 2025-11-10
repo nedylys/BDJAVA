@@ -1,18 +1,18 @@
 CREATE TABLE AdressePComplete (
-    Latitude NUMBER NOT NULL
+    Latitude FLOAT NOT NULL
         CONSTRAINT Clatitude CHECK (Latitude >= -90 AND Latitude <= 90),
-    Longitude NUMBER NOT NULL
+    Longitude FLOAT NOT NULL
         CONSTRAINT CLongitude CHECK (Longitude >= -180 AND Longitude <= 180),
     PRIMARY KEY (Latitude, Longitude) 
 );
 
 CREATE TABLE Producteur (
-    idProducteur NUMBER PRIMARY KEY,
-    email VARCHAR2(30),
+    idProducteur INT PRIMARY KEY,
+    email VARCHAR2(100),
     NomProducteur VARCHAR2(30),
     PrenomProducteur VARCHAR2(30),
-    Latitude NUMBER NOT NULL,
-    Longitude NUMBER NOT NULL,
+    Latitude FLOAT NOT NULL,
+    Longitude FLOAT NOT NULL,
     CONSTRAINT FK_Producteur_Adresse
         FOREIGN KEY (Latitude, Longitude) 
         REFERENCES AdressePComplete(Latitude, Longitude)
@@ -25,7 +25,7 @@ CREATE TABLE Activité(
 );
 
 CREATE TABLE ProducteurAPourActivité(
-    idProducteur NUMBER,
+    idProducteur INT,
     TypeActivité VARCHAR2(30),
     PRIMARY KEY (idProducteur, TypeActivité),
     CONSTRAINT fk_idProducteur
@@ -39,13 +39,13 @@ CREATE TABLE ProducteurAPourActivité(
 );
 
 CREATE TABLE Produit(
-    idProduit NUMBER PRIMARY KEY,
+    idProduit INT PRIMARY KEY,
     NomProduit VARCHAR2(30),
     CatégorieProduit VARCHAR2(30)
          CHECK (CatégorieProduit IN ('Fromage', 'boisson', 'céréales', 'légumineuse', 'fruits secs', 'huile')),
     DescriptionProduit VARCHAR2(255),
-    StockProduit NUMBER CHECK (StockProduit >= 0),
-    idProducteur NUMBER,
+    StockProduit INT CHECK (StockProduit >= 0),
+    idProducteur INT,
     CONSTRAINT fk_produit_producteur
         FOREIGN KEY (idProducteur) 
         REFERENCES Producteur(idProducteur)
@@ -60,10 +60,10 @@ CREATE TABLE SaisonDisponibilité(
 );
 
 CREATE TABLE Caractéristique(
+    idProduit INT,
     nomCaractéristique VARCHAR2(50)
         CHECK (nomCaractéristique IN ('bio', 'allergènes', 'pays d’origine')),
     valeur VARCHAR2(50),
-    idProduit NUMBER,
     PRIMARY KEY (idProduit, nomCaractéristique),
         CONSTRAINT fk_idProduit
         FOREIGN KEY (idProduit) 
@@ -72,7 +72,7 @@ CREATE TABLE Caractéristique(
 );
 
 CREATE TABLE ProduitAPourSaison(
-    idProduit NUMBER,
+    idProduit INT,
     DateDébut DATE,
     DateFin DATE,
     PRIMARY KEY (idProduit, DateDébut, DateFin),
@@ -87,7 +87,7 @@ CREATE TABLE ProduitAPourSaison(
 );
 
 CREATE TABLE ClientAnonyme(
-    idClient NUMBER PRIMARY KEY
+    idClient INT PRIMARY KEY
 );
 
 CREATE TABLE Client(
@@ -95,7 +95,7 @@ CREATE TABLE Client(
     NomClient VARCHAR2(30),
     PrenomClient VARCHAR2(30),
     TelephoneClient VARCHAR2(15),
-    idClient NUMBER UNIQUE,
+    idClient INT UNIQUE,
     CONSTRAINT fk_client_anonyme
         FOREIGN KEY (idClient) REFERENCES ClientAnonyme(idClient) ON DELETE CASCADE
 );
@@ -119,31 +119,31 @@ CREATE TABLE ClientAPourAdresseLivraison(
 );
 
 CREATE TABLE Commande(
-    idCommande NUMBER PRIMARY KEY,
+    idCommande INT PRIMARY KEY,
     DateCommande DATE,
     HeureCommande DATE,
     ModePaiement VARCHAR2(30)
         CHECK (ModePaiement IN ('En ligne', 'En boutique')),
     ModeRecuperation VARCHAR2(30),
-    idClient NUMBER,
+    idClient INT,
     CONSTRAINT fk_commande_client
         FOREIGN KEY (idClient) REFERENCES ClientAnonyme(idClient) ON DELETE CASCADE
 );
 
 CREATE TABLE Contenant(
-    idContenant NUMBER PRIMARY KEY,
+    idContenant INT PRIMARY KEY,
     TypeContenant VARCHAR2(30)
         CHECK (TypeContenant IN ('bocal en verre', 'sachet kraft', 'sachet tissu', 'papier ciré', 'autre')),
-    CapacitéContenant NUMBER CHECK (CapacitéContenant >= 0),
-    StockDisponible NUMBER CHECK (StockDisponible >= 0),
-    ReutilisableContenant CHAR(1)
+    CapacitéContenant INT CHECK (CapacitéContenant >= 0),
+    StockDisponible INT CHECK (StockDisponible >= 0),
+    ReutilisableContenant INT CHECK (ReutilisableContenant IN (0,1))
 );
 
 CREATE TABLE LotContenant(
     DateRéceptionC DATE,
-    idContenant NUMBER,
-    QuantitéDisponibleC NUMBER CHECK (QuantitéDisponibleC >= 0),
-    PrixVenteCTTC NUMBER CHECK (PrixVenteCTTC >= 0),
+    idContenant INT,
+    QuantitéDisponibleC INT CHECK (QuantitéDisponibleC >= 0),
+    PrixVenteCTTC INT CHECK (PrixVenteCTTC >= 0),
     PRIMARY KEY (DateRéceptionC, idContenant),
     CONSTRAINT fk_lot_contenant
         FOREIGN KEY (idContenant) 
@@ -154,14 +154,14 @@ CREATE TABLE LotContenant(
 CREATE TABLE LotProduit(
     ModeConditionnement VARCHAR2(30) 
         CHECK (ModeConditionnement IN ('vrac', 'préconditionné')),
-    PoidsUnitaire NUMBER,
+    PoidsUnitaire INT,
     DateRéceptionP DATE,
-    QuantitéDisponibleP NUMBER CHECK (QuantitéDisponibleP >= 0),
+    QuantitéDisponibleP INT CHECK (QuantitéDisponibleP >= 0),
     DatePéremptionType VARCHAR2(30) CHECK (DatePéremptionType IN ('DLC', 'DLUO')),
     DatePeremption DATE,
-    PrixVentePTTC NUMBER CHECK (PrixVentePTTC >= 0),
-    PrixAchatProducteur NUMBER CHECK (PrixAchatProducteur >= 0),
-    idProduit NUMBER,
+    PrixVentePTTC INT CHECK (PrixVentePTTC >= 0),
+    PrixAchatProducteur INT CHECK (PrixAchatProducteur >= 0),
+    idProduit INT,
     PRIMARY KEY (DateRéceptionP, idProduit, ModeConditionnement, PoidsUnitaire),
     CONSTRAINT fk_lot_produit 
         FOREIGN KEY (idProduit) REFERENCES Produit(idProduit) 
@@ -171,15 +171,15 @@ CREATE TABLE LotProduit(
 );
 
 CREATE TABLE LigneCommandeProduit(
-    numLigneP NUMBER,
-    idCommande NUMBER,
-    idProduit NUMBER,
+    numLigneP INT,
+    idCommande INT,
+    idProduit INT,
     ModeConditionnement VARCHAR2(30),
-    PoidsUnitaire NUMBER,
+    PoidsUnitaire INT,
     DateRéceptionP DATE,
-    QuantitéCommandéeP NUMBER CHECK (QuantitéCommandéeP > 0),
-    PrixUnitaireP NUMBER CHECK (PrixUnitaireP > 0),
-    SousTotalLigneP NUMBER CHECK (SousTotalLigneP > 0),
+    QuantitéCommandéeP INT CHECK (QuantitéCommandéeP > 0),
+    PrixUnitaireP INT CHECK (PrixUnitaireP > 0),
+    SousTotalLigneP INT CHECK (SousTotalLigneP > 0),
     PRIMARY KEY (numLigneP, idCommande),
     CONSTRAINT fk_ligne_commande_produit_commande
         FOREIGN KEY (idCommande) 
@@ -192,13 +192,13 @@ CREATE TABLE LigneCommandeProduit(
 );
 
 CREATE TABLE LigneCommandeContenant(
-    numLigneC NUMBER,
-    idCommande NUMBER,
-    idContenant NUMBER,
+    numLigneC INT,
+    idCommande INT,
+    idContenant INT,
     DateRéceptionC DATE,
-    QuantitéCommandéeC NUMBER CHECK (QuantitéCommandéeC > 0),
-    PrixUnitaireC NUMBER CHECK (PrixUnitaireC > 0),
-    SousTotalLigneC NUMBER CHECK (SousTotalLigneC > 0),
+    QuantitéCommandéeC INT CHECK (QuantitéCommandéeC > 0),
+    PrixUnitaireC INT CHECK (PrixUnitaireC > 0),
+    SousTotalLigneC INT CHECK (SousTotalLigneC > 0),
     PRIMARY KEY (numLigneC, idCommande),
     CONSTRAINT fk_ligne_commande_contenant_commande
         FOREIGN KEY (idCommande) 
@@ -211,9 +211,9 @@ CREATE TABLE LigneCommandeContenant(
 );
 
 CREATE TABLE CommandeàLivrer(
-    idCommande NUMBER PRIMARY KEY,
+    idCommande INT PRIMARY KEY,
     StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En préparation', 'Prête', 'En livraison', 'Livrée', 'Annulée')),
-    FraisLivraison NUMBER CHECK (FraisLivraison >= 0),
+    FraisLivraison INT CHECK (FraisLivraison >= 0),
     DateLivraisonEstimée DATE,
     AdresseLivraison VARCHAR2(255),
     CONSTRAINT fk_commande_livrer_commande
@@ -227,7 +227,7 @@ CREATE TABLE CommandeàLivrer(
 );
 
 CREATE TABLE CommandeenBoutique(
-    idCommande NUMBER PRIMARY KEY,
+    idCommande INT PRIMARY KEY,
     StatutCommandeB VARCHAR2(30) CHECK (StatutCommandeB IN ('En préparation', 'Prête', 'En livraison', 'Récupérée', 'Annulée')),
     CONSTRAINT fk_commande_boutique_commande
         FOREIGN KEY (idCommande) 
@@ -236,10 +236,10 @@ CREATE TABLE CommandeenBoutique(
 );
 
 CREATE TABLE PerteProduit(
-    idPerteP NUMBER,
-    idProduit NUMBER,
+    idPerteP INT,
+    idProduit INT,
     DatePerteP DATE,
-    QuantitéPerdueP NUMBER CHECK (QuantitéPerdueP > 0),
+    QuantitéPerdueP INT CHECK (QuantitéPerdueP > 0),
     NaturePerteP VARCHAR2(255) CHECK (NaturePerteP IN ('vol','casse')),
     PRIMARY KEY (idPerteP, idProduit),
     CONSTRAINT fk_perte_produit
@@ -249,10 +249,10 @@ CREATE TABLE PerteProduit(
 );
 
 CREATE TABLE PerteContenant(
-    idPerteC NUMBER,
-    idContenant NUMBER,
+    idPerteC INT,
+    idContenant INT,
     DatePerteC DATE,
-    QuantitéPerdueC NUMBER CHECK (QuantitéPerdueC > 0),
+    QuantitéPerdueC INT CHECK (QuantitéPerdueC > 0),
     NaturePerteC VARCHAR2(255) CHECK (NaturePerteC IN ('vol','casse')),
     PRIMARY KEY (idPerteC, idContenant),
     CONSTRAINT fk_perte_contenant
@@ -262,7 +262,7 @@ CREATE TABLE PerteContenant(
 );
 
 CREATE TABLE ProduitStock(
-    idProduit NUMBER PRIMARY KEY,
+    idProduit INT PRIMARY KEY,
     CONSTRAINT fk_produit_stock
         FOREIGN KEY (idProduit) 
         REFERENCES Produit(idProduit)
@@ -270,44 +270,13 @@ CREATE TABLE ProduitStock(
 );
 
 CREATE TABLE ProduitCommande(
-    idProduit NUMBER PRIMARY KEY,
-    DélaiDisponibilitéHeure NUMBER CHECK (DélaiDisponibilitéHeure > 0),
+    idProduit INT PRIMARY KEY,
+    DélaiDisponibilitéHeure INT CHECK (DélaiDisponibilitéHeure > 0),
     CONSTRAINT fk_produit_commande
         FOREIGN KEY (idProduit) 
         REFERENCES Produit(idProduit)
         ON DELETE CASCADE
 );
-
--- DROP TABLE ProducteurAPourActivité;
--- DROP TABLE Producteur;
--- DROP TABLE Activité;
--- DROP TABLE AdressePComplete;
--- DROP TABLE LigneCommandeProduit CASCADE CONSTRAINTS;
--- DROP TABLE LigneCommandeContenant CASCADE CONSTRAINTS;
--- DROP TABLE CommandeàLivrer CASCADE CONSTRAINTS;
--- DROP TABLE CommandeenBoutique CASCADE CONSTRAINTS;
--- DROP TABLE ProduitAPourCaractéristique CASCADE CONSTRAINTS;
--- DROP TABLE ProduitAPourSaison CASCADE CONSTRAINTS;
--- DROP TABLE ProducteurAPourActivité CASCADE CONSTRAINTS;
--- DROP TABLE PerteProduit CASCADE CONSTRAINTS;
--- DROP TABLE PerteContenant CASCADE CONSTRAINTS;
--- DROP TABLE LotProduit CASCADE CONSTRAINTS;
--- DROP TABLE LotContenant CASCADE CONSTRAINTS;
--- DROP TABLE ProduitStock CASCADE CONSTRAINTS;
--- DROP TABLE ProduitCommande CASCADE CONSTRAINTS;
--- DROP TABLE Produit CASCADE CONSTRAINTS;
--- DROP TABLE Contenant CASCADE CONSTRAINTS;
--- DROP TABLE LigneCommandeProduit CASCADE CONSTRAINTS; -- si pas déjà supprimée
--- DROP TABLE Commande CASCADE CONSTRAINTS;
--- DROP TABLE ClientAPourAdresseLivraison CASCADE CONSTRAINTS;
--- DROP TABLE Client CASCADE CONSTRAINTS;
--- DROP TABLE ClientAnonyme CASCADE CONSTRAINTS;
--- DROP TABLE AdresseLivraison CASCADE CONSTRAINTS;
--- DROP TABLE Activité CASCADE CONSTRAINTS;
--- DROP TABLE Caractéristique CASCADE CONSTRAINTS;
--- DROP TABLE SaisonDisponibilité CASCADE CONSTRAINTS;
--- DROP TABLE Producteur CASCADE CONSTRAINTS;
--- DROP TABLE AdressePComplete CASCADE CONSTRAINTS;
 
 
 
