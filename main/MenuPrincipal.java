@@ -57,9 +57,11 @@ public class MenuPrincipal {
                 System.out.println("[!] Impossible de clear le terminal");
             }
             try {
-                System.out.println("\n=== Catalogue des produits ===");
+                System.out.println("\n==================================== Catalogue des produits ====================================");
+                System.out.println("\n");
+
                 // Creation de la requete
-                PreparedStatement stmt = connection.prepareStatement(StatementCommande.PRE_STMT);
+                PreparedStatement stmt = connection.prepareStatement(Statement.PRE_STMT);
                 // Execution de la requete
                 ResultSet rset = stmt.executeQuery();
                 // Affichage du resultat
@@ -96,7 +98,7 @@ public class MenuPrincipal {
             } catch (Exception e) {
                 System.out.println("[!] Impossible de clear le terminal");
             }
-            System.out.println("\n === Espace commande à passer ===");
+            System.out.println("\n ====== Espace commande à passer ======");
 
             PassCommande commande = new PassCommande(connection,scanner);
             commande.beginCommande();
@@ -117,14 +119,36 @@ public class MenuPrincipal {
             // TODO :Implémenter la transaction pour consulter les commandes en cours
         }
         private void dumpResultSet(ResultSet rset) throws SQLException {
-        ResultSetMetaData rsetmd = rset.getMetaData();
-        int i = rsetmd.getColumnCount();
-        while (rset.next()) {
-            for (int j = 1; j <= i; j++) {
-                System.out.print(rset.getString(j) + "\t");
-	    }
-	    System.out.println();
-        }
+            ResultSetMetaData rsetmd = rset.getMetaData();
+            int columnCount = rsetmd.getColumnCount();
+
+            // Largeur personnalisée par colonne
+            int[] widths = {13, 20, 25, 38, 15, 15};
+            for (int i = 1; i <= columnCount; i++) {
+                int width = i <= widths.length ? widths[i - 1] : 20;
+                System.out.printf("%-" + width + "s", rsetmd.getColumnName(i));
+            }
+            System.out.println();
+            for (int i = 1; i <= columnCount; i++) {
+                int width = i <= widths.length ? widths[i - 1] : 20;
+            }
+
+            System.out.println("\n" + "=".repeat(125));
+            
+            while (rset.next()) {
+                for (int j = 1; j <= columnCount; j++) {
+                    int width = j <= widths.length ? widths[j - 1] : 20;
+                    String value = rset.getString(j);
+                    if (value == null) value = "";
+                    if (value.length() > width - 1) value = value.substring(0, width - 2) + "…"; 
+                    System.out.printf("%-" + width + "s", value);
+                }
+                System.out.println();
+            }
+        
+            System.out.println("=".repeat(125));
+
+            }
     }
     
-}
+    

@@ -1,8 +1,6 @@
 import java.sql.*;
 
 public class StatementCommande{
-    static final String PRE_STMT = "select * from emp";
-
     static final String STDelai = "select DelaiDisponibilitéHeure from ProduitCommande where idProduit = ? ";
     
     static final String STCommande = "select idProduit from ProduitCommande where idProduit = ? ";

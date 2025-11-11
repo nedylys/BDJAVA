@@ -1,58 +1,66 @@
+import java.io.Console;
 import java.sql.*;
+import java.util.Scanner;
 
 public class ConnectionBase{
     
     static final String CONN_URL = "jdbc:oracle:thin:@oracle1.ensimag.fr:1521:oracle1";
-    static final String USER ="iknem";
-    static final String PASSWD = "iknem";
+    static final String USER ="haninih";
+    static final String PASSWD = "haninih";
 
     private String user;
     private String passwd ;
     private Connection conn;
 
 
-
-
-    public ConnectionBase(String user, String passwd) {
-        this.user = user;
-        this.passwd = passwd;
+    public void checkConnection(){
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("\n👤Entrez votre identifiant Épicerie-Moul-Lhanout :)  ");
+            this.user = scanner.nextLine();                
+            Console console = System.console();
+            String passwd;
+            char[] password =console.readPassword("\n🔒Entrez votre mode de passe Épicerie-Moul-Lhanout :) ");
+            this.passwd = new String(password);
     }
-    public Connection beginConnection(){
-        try {
-            if (!user.equals(USER) || !passwd.equals(PASSWD)) {
-                System.out.println(" Identifiants incorrects. Accès refusé. Réssayez !");
-                return null;
+    public Connection beginConnection() {
+        int tries = 0;
+        while (tries < 3) {
+            checkConnection();
+
+            if (user.equals(USER) && passwd.equals(PASSWD)) {
+                try {
+                    ProcessBuilder builder = new ProcessBuilder();
+                    new ProcessBuilder("clear").inheritIO().start().waitFor(); // voir documentation java Class ProcessBuilder
+                } catch (Exception e) {
+                    System.out.println("[!] Impossible de clear le terminal");
+                }
+
+                System.out.println("\n========================================================");
+                System.out.println("                 🛒 Moul-Lhanout Market 🛒              ");
+                System.out.println("========================================================");
+
+                try {
+                    System.out.print("\n    ⏳ Loading Oracle driver...  ");
+                    DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
+                    System.out.println("🗃 Loaded successfully");
+
+                    System.out.print("\n    🔁 Connecting to the database... ");
+                    conn = DriverManager.getConnection(CONN_URL, USER, PASSWD);
+                    System.out.println("🤝 Connected!");
+                    return conn;
+                } catch (SQLException e) {
+                    System.err.println("❌ Échec de la connexion SQL");
+                    e.printStackTrace(System.err);
+                    return null;
+                }
+            } else {
+                System.out.println(" \nIdentifiants incorrects. Accès refusé. Réessayez !");
+                tries++;
             }
-            // Clear le terminal
-            try {
-                new ProcessBuilder("clear").inheritIO().start().waitFor();
-            } catch (Exception e) {
-                System.out.println("[!] Impossible de clear le terminal");
-            }
-
-            System.out.println("\n========================================================");
-            System.out.println("                 🛒 Moul-Lhanout Market 🛒              ");
-            System.out.println("========================================================");
-
-            // Enregistrement du driver Oracle
-            System.out.print("\n    ⏳ Loading Oracle driver...  "); 
-            DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
-            System.out.println("🗃 Loaded successfully");
-            // Connection
-
-            // Etablissement de la connection
-            System.out.print("\n    🔁Connecting to the database... "); 
-            Connection conn = DriverManager.getConnection(CONN_URL, USER, PASSWD);
-            System.out.println("🤝 Connected!");
-
-            // Fermeture 
-            return conn;
-        } 
-        catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return null;
         }
+
+        System.out.println("⛔ Accès temporairement bloqué. Réessayez plus tard (~30 min) !");
+        return null;
     }
     public void close(){
         try{
