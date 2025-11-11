@@ -46,7 +46,7 @@ public class MenuPrincipal {
     
                 /// Vérifie que l’entrée est bien un nombre
                 while (!scanner.hasNextInt()) {
-                    System.out.print("Veuillez entrer un nombre valide : ");
+                    System.out.print("Veuillez entrer un nombre valide :) ");
                     scanner.next();
                 }
     
