@@ -37,12 +37,11 @@ public class MenuPrincipal {
                     case 1 -> afficherCatalogue(scanner,choix);
                     case 2 -> passerCommande(scanner);
                     case 3 -> suiviCommandes();
-                    case 4 -> consulterAlertes();
+                    case 4 -> consulterAlertes(scanner,choix);
                     case 5 -> cloturerCommande();
                     case 6 -> System.out.println("Au revoir !");
                     default -> System.out.println("Choix invalide, veuillez réessayer.");
                 }
-                scanner.close();
             }
             catch (Exception e) {
                 System.err.println("Failed !.");
@@ -80,7 +79,16 @@ public class MenuPrincipal {
                         }
                         afficherMenu();
                     }    
-                    default -> System.out.println("Choix invalide, veuillez réessayer.");
+                    default -> {
+                        System.out.println("Choix invalide, veuillez réessayer.🤕");
+                        try {
+                            Thread.sleep(1000); // 1000 ms = 1 seconde
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }                        
+                        afficherCatalogue(scanner, choix);
+                    }
+
                 }
                 scanner.close();
 
@@ -98,15 +106,82 @@ public class MenuPrincipal {
             } catch (Exception e) {
                 System.out.println("[!] Impossible de clear le terminal");
             }
-            System.out.println("\n ====== Espace commande à passer ======");
+            System.out.println("\n ==================================== Espace commande à passer ====================================");
 
             PassCommande commande = new PassCommande(connection,scanner);
             commande.beginCommande();
         }
     
-        public void consulterAlertes(){
-            System.out.println("\n=== Alertes de péremption ===");
-            // TODO : Implémenter la requête pour produits proches de la date limite
+        public void consulterAlertes(Scanner scanner, int choix){
+            // Clear le terminal
+            try {
+                new ProcessBuilder("clear").inheritIO().start().waitFor();
+            } catch (Exception e) {
+                System.out.println("[!] Impossible de clear le terminal");
+            }
+            try {
+                if (connection == null || connection.isClosed()) {
+                    System.out.println("⚠️ La connexion à la base est perdue. Retour au menu.");
+                    ConnectionBase connB = new ConnectionBase();
+                    Connection conn = connB.beginConnection();
+                    afficherMenu();
+                }
+            } catch (SQLException e) {
+                System.err.println("Erreur lors de la vérification de la connexion.");
+                e.printStackTrace();
+            }
+            
+            
+            try {
+                System.out.println("\n==================================== 🚨 Alertes de péremption ====================================\n");
+                // Creation de la requete
+                PreparedStatement stmt = connection.prepareStatement(Statement.ALERTES_PRE);
+                // Execution de la requete
+                ResultSet rset = stmt.executeQuery();
+                // Affichage du resultat
+                if(!rset.next()){
+                    System.out.println("");
+                    System.out.println("Aucune alerte de péremption pour le moment.🤗");
+                    System.out.println("");
+                }
+                if(rset.next()){
+                    dumpResultSet(rset);
+                    System.out.println("");
+                }
+                    System.out.println(" 0 : Retour au menu prinicpal");
+                    choix = scanner.nextInt();
+                    // Gestion des choix
+                    switch (choix) {
+                        case 0 -> {
+                            // Clear le terminal
+                            try {
+                                new ProcessBuilder("clear").inheritIO().start().waitFor();
+                            } catch (Exception e) {
+                                System.out.println("[!] Impossible de clear le terminal");
+                            }
+                            afficherMenu();
+                        }    
+                        
+                        default -> {
+                            System.out.println("Choix invalide, veuillez réessayer.🤕");
+                            try {
+                                Thread.sleep(1000); // 1000 ms = 1 seconde
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }                        
+                            consulterAlertes(scanner, choix);
+                        }
+                    }
+                    scanner.close();
+            }
+            
+
+            catch (Exception e) {
+                System.err.println("Erreur lors de la consultation des alertes de péremption.");
+                e.printStackTrace(System.err);
+            }
+
+
         }
     
         public void cloturerCommande(){
@@ -123,7 +198,7 @@ public class MenuPrincipal {
             int columnCount = rsetmd.getColumnCount();
 
             // Largeur personnalisée par colonne
-            int[] widths = {13, 20, 25, 38, 15, 15};
+            int[] widths = {12, 20, 18, 35, 15, 15};
             for (int i = 1; i <= columnCount; i++) {
                 int width = i <= widths.length ? widths[i - 1] : 20;
                 System.out.printf("%-" + width + "s", rsetmd.getColumnName(i));
@@ -133,7 +208,7 @@ public class MenuPrincipal {
                 int width = i <= widths.length ? widths[i - 1] : 20;
             }
 
-            System.out.println("\n" + "=".repeat(125));
+            System.out.println("\n" + "=".repeat(115));
             
             while (rset.next()) {
                 for (int j = 1; j <= columnCount; j++) {
@@ -146,7 +221,7 @@ public class MenuPrincipal {
                 System.out.println();
             }
         
-            System.out.println("=".repeat(125));
+            System.out.println("=".repeat(115));
 
             }
     }
