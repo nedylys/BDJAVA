@@ -54,7 +54,11 @@ public class ConnectionBase{
                     return null;
                 }
             } else {
-                System.out.println(" \nIdentifiants incorrects. Accès refusé. Réessayez !");
+                int k = 2-tries;
+                System.out.print(" \nIdentifiants incorrects. Accès refusé. Réessayez !");
+                if(! (k ==0) ){
+                    System.out.print("(Tentatives restantes : "+k+")✖");
+                }
                 tries++;
             }
         }

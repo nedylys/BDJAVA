@@ -8,13 +8,13 @@ public class Statement{
                p.NOMPRODUIT,
                p.CATÉGORIEPRODUIT,
                p.STOCKPRODUIT,
-               l.DATERÉCEPTIONP,
                l.DatePeremption,
-               (l.DatePeremption - l.DATERÉCEPTIONP) AS timer
+               CEIL((l.DatePeremption - SYSDATE)) AS jours_restants
         FROM Produit p JOIN LotProduit l ON l.IdProduit = p.IdProduit
-        WHERE (l.DatePeremption - l.DATERÉCEPTIONP) <= 15
-        ORDER BY (l.DatePeremption - l.DATERÉCEPTIONP) ASC
+        WHERE (l.DatePeremption - CURRENT_DATE) <= 20
+        ORDER BY jours_restants ASC
     """;
-    
+    //   l.DATERÉCEPTIONP,
+
     
 }
