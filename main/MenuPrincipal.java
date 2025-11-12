@@ -56,7 +56,7 @@ public class MenuPrincipal {
                 System.out.println("[!] Impossible de clear le terminal");
             }
             try {
-                System.out.println("\n==================================== Catalogue des produits ====================================");
+                System.out.println("\n=============================================== Catalogue des produits ===============================================");
                 System.out.println("\n");
 
                 // Creation de la requete
@@ -139,17 +139,17 @@ public class MenuPrincipal {
                 // Execution de la requete
                 ResultSet rset = stmt.executeQuery();
                 // Affichage du resultat
-                if(!rset.next()){
+                // Appeler dumpResultSet qui retourne un boolean
+                boolean hasResults = dumpResultSet(rset);
+                
+                if (!hasResults) {
                     System.out.println("");
-                    System.out.println("Aucune alerte de péremption pour le moment.🤗");
+                    System.out.println("Aucune alerte de péremption pour le moment. 🤗");
                     System.out.println("");
                 }
-                if(rset.next()){
-                    dumpResultSet(rset);
-                    System.out.println("");
-                }
-                    System.out.println(" 0 : Retour au menu prinicpal");
-                    choix = scanner.nextInt();
+                
+                System.out.println(" 0 : Retour au menu principal");
+                choix = scanner.nextInt();
                     // Gestion des choix
                     switch (choix) {
                         case 0 -> {
@@ -158,7 +158,8 @@ public class MenuPrincipal {
                                 new ProcessBuilder("clear").inheritIO().start().waitFor();
                             } catch (Exception e) {
                                 System.out.println("[!] Impossible de clear le terminal");
-                            }
+                            }               
+
                             afficherMenu();
                         }    
                         
@@ -193,12 +194,12 @@ public class MenuPrincipal {
             System.out.println("\n=== Suivi des commandes ===");
             // TODO :Implémenter la transaction pour consulter les commandes en cours
         }
-        private void dumpResultSet(ResultSet rset) throws SQLException {
+        private boolean dumpResultSet(ResultSet rset) throws SQLException {
             ResultSetMetaData rsetmd = rset.getMetaData();
             int columnCount = rsetmd.getColumnCount();
 
-            // Largeur personnalisée par colonne
-            int[] widths = {12, 20, 18, 35, 15, 15};
+            int[] widths = {12, 15, 18, 20, 15, 15, 15};
+            
             for (int i = 1; i <= columnCount; i++) {
                 int width = i <= widths.length ? widths[i - 1] : 20;
                 System.out.printf("%-" + width + "s", rsetmd.getColumnName(i));
@@ -208,9 +209,11 @@ public class MenuPrincipal {
                 int width = i <= widths.length ? widths[i - 1] : 20;
             }
 
-            System.out.println("\n" + "=".repeat(115));
+            System.out.println("\n" + "=".repeat(125));
             
+            boolean hasResults = false;
             while (rset.next()) {
+                hasResults = true;  // Au moins un résultat trouvé
                 for (int j = 1; j <= columnCount; j++) {
                     int width = j <= widths.length ? widths[j - 1] : 20;
                     String value = rset.getString(j);
@@ -220,10 +223,10 @@ public class MenuPrincipal {
                 }
                 System.out.println();
             }
-        
-            System.out.println("=".repeat(115));
 
-            }
+            System.out.println("=".repeat(125));
+            return hasResults;  // Retourne true si des résultats ont été affichés
+        }
     }
     
     
