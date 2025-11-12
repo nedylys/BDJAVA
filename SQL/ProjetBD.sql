@@ -210,7 +210,7 @@ CREATE TABLE LigneCommandeContenant(
         ON DELETE CASCADE
 );
 
-CREATE TABLE CommandeàLivrer(
+CREATE TABLE CommandeaLivrer(
     idCommande INT PRIMARY KEY,
     StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En preparation', 'Prête', 'En livraison', 'Livree', 'Annulee')),
     FraisLivraison INT CHECK (FraisLivraison >= 0),
@@ -289,35 +289,71 @@ BEGIN
     BEGIN
         SELECT COUNT(*) INTO nb_cmd
         FROM Commande
-        WHERE idClient = :OLD.idClient; -- Utilisation de :OLD pour accéder à l'ancienne valeur de idClient
+        WHERE idClient = :OLD.idClient; -- Utilisation de :OLD pour accéder a l'ancienne valeur de idClient
 
         IF nb_cmd > 0 THEN
-            RAISE_APPLICATION_ERROR(-20001, 'Ce client a encore des commandes.');
+            RAISE_APPLICATION_ERROR(-31, 'Ce client a encore des commandes.');
         END IF;
     END;
 END;
 /
 
 
-CREATE TRIGGER Verif_sous_total_ligne
+CREATE TRIGGER Verif_sous_total_ligneP
 -- Trigger pour vérifier que le sous-total d'une ligne de commande produit est correct
 BEFORE INSERT OR UPDATE ON LigneCommandeProduit
 FOR EACH ROW
 BEGIN
     IF NEW.SousTotalLigneP <> NEW.QuantiteCommandeeP * NEW.PrixUnitaireP THEN
-        RAISE_APPLICATION_ERROR(-20002, 'Le sous-total de la ligne de commande produit est incorrect.');
+        RAISE_APPLICATION_ERROR(-32, 'Le sous-total de la ligne de commande produit est incorrect.');
+    END IF;
+END;
+/
+
+CREATE TRIGGER Verif_sous_total_ligneC
+-- Trigger pour vérifier que le sous-total d'une ligne de commande contenant est correct
+BEFORE INSERT OR UPDATE ON LigneCommandeContenant
+FOR EACH ROW
+BEGIN
+    IF NEW.SousTotalLigneC <> NEW.QuantiteCommandeeC * NEW.PrixUnitaireC THEN
+        RAISE_APPLICATION_ERROR(-32, 'Le sous-total de la ligne de commande contenant est incorrect.');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER verif_statut_commande
+BEFORE UPDATE ON CommandeaLLivrer
+FOR EACH ROW
+BEGIN
+    IF :OLD.StatutCommande IN ('Livrée', 'Annulée')
+       AND :NEW.StatutCommande NOT IN ('Livrée', 'Annulée') THEN
+        RAISE_APPLICATION_ERROR(-20005, 'Statut invalide : une commande livrée ou annulée ne peut pas être réouverte');
     END IF;
 END;
 /
 
 
-
-CREATE TRIGGER Verif_commande_stock
--- Trigger pour vérifier que la quantité commandée ne dépasse pas le stock disponible
+CREATE TRIGGER Verif_commandeP_stock
+-- Trigger pour vérifier que la quantité commandée d'un produit ne dépasse pas le stock disponible
 BEFORE INSERT OR UPDATE ON LigneCommandeProduit
 FOR EACH ROW
 BEGIN
     DECLARE
         stock_disponible FLOAT;
         BEGIN
-            SELECT StockDisponible INTO stock_disponible FROM Produit WHERE idProduit = New.idProduit
+            SELECT StockDisponible INTO stock_disponible FROM Produit WHERE idProduit = New.idProduit;
+            IF  :NEW.QuantiteCommandeeP > stock_disponible THEN
+                RAISE_APPLICATION_ERROR(-34, 'Quantité commandée pour ce produit > stock disponible')
+
+
+CREATE TRIGGER Verif_commandeC_stock
+-- Trigger pour vérifier que la quantité commandée d'un contenant ne dépasse pas le stock disponible
+BEFORE INSERT OR UPDATE ON LigneCommandeContenant
+FOR EACH ROW
+BEGIN
+    DECLARE
+        stock_disponible FLOAT;
+        BEGIN
+            SELECT StockDisponible INTO stock_disponible FROM Produit WHERE idContenant = New.idContenant;
+            IF  :NEW.QuantiteCommandeeC > stock_disponible THEN
+                RAISE_APPLICATION_ERROR(-35, 'Quantité commandée pour ce contenant > stock disponible')
