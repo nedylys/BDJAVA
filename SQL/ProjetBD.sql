@@ -357,3 +357,32 @@ BEGIN
             SELECT StockDisponible INTO stock_disponible FROM Produit WHERE idContenant = New.idContenant;
             IF  :NEW.QuantiteCommandeeC > stock_disponible THEN
                 RAISE_APPLICATION_ERROR(-35, 'Quantité commandée pour ce contenant > stock disponible')
+
+
+CREATE TRIGGER Verif_perte_produit_stock
+-- Trigger pour vérifier que la quantité perdue d'un produit ne dépasse pas le stock disponible
+BEFORE INSERT OR UPDATE ON PerteProduit
+FOR EACH ROW
+BEGIN
+    DECLARE
+        quantite_perdueP INT;
+        BEGIN
+            SELECT StockProduit INTO quantite_perdueP FROM Produit WHERE idProduit = New.idProduit;
+            IF  :NEW.QuantitePerdueP > quantite_perdueP THEN
+                RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce produit > stock disponible')
+END;
+/
+
+CREATE TRIGGER Verif_perte_contenant_stock
+-- Trigger pour vérifier que la quantité perdue d'un produit ne dépasse pas le stock disponible
+BEFORE INSERT OR UPDATE ON PerteProduit
+FOR EACH ROW
+BEGIN
+    DECLARE
+        quantite_perdueC INT;
+        BEGIN
+            SELECT StockContenant INTO quantite_perdueC FROM Contenant WHERE idContenant = New.idContenant;
+            IF  :NEW.QuantitePerdueC > quantite_perdueC THEN
+                RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce contenant > stock disponible')
+END;
+/
