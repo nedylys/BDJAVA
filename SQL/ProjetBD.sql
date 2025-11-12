@@ -19,30 +19,30 @@ CREATE TABLE Producteur (
         ON DELETE CASCADE
 );
 
-CREATE TABLE Activité(
-    TypeActivité VARCHAR2(30) PRIMARY KEY
-        CHECK (TypeActivité IN ('Agriculteur', 'Éleveur', 'Fromager'))
+CREATE TABLE Activite(
+    TypeActivite VARCHAR2(30) PRIMARY KEY
+        CHECK (TypeActivite IN ('Agriculteur', 'eleveur', 'Fromager'))
 );
 
-CREATE TABLE ProducteurAPourActivité(
+CREATE TABLE ProducteurAPourActivite(
     idProducteur INT,
-    TypeActivité VARCHAR2(30),
-    PRIMARY KEY (idProducteur, TypeActivité),
+    TypeActivite VARCHAR2(30),
+    PRIMARY KEY (idProducteur, TypeActivite),
     CONSTRAINT fk_idProducteur
         FOREIGN KEY (idProducteur) 
         REFERENCES Producteur(idProducteur)
         ON DELETE CASCADE,
-    CONSTRAINT fk_typeActivité
-        FOREIGN KEY (TypeActivité) 
-        REFERENCES Activité(TypeActivité)
+    CONSTRAINT fk_typeActivite
+        FOREIGN KEY (TypeActivite) 
+        REFERENCES Activite(TypeActivite)
         ON DELETE CASCADE
 );
 
 CREATE TABLE Produit(
     idProduit INT PRIMARY KEY,
     NomProduit VARCHAR2(30),
-    CatégorieProduit VARCHAR2(30)
-         CHECK (CatégorieProduit IN ('Fromage', 'boisson', 'céréales', 'légumineuse', 'fruits secs', 'huile')),
+    CategorieProduit VARCHAR2(30)
+         CHECK (CategorieProduit IN ('Fromage', 'boisson', 'cereales', 'legumineuse', 'fruits secs', 'huile')),
     DescriptionProduit VARCHAR2(255),
     StockProduit INT CHECK (StockProduit >= 0),
     idProducteur INT,
@@ -52,19 +52,19 @@ CREATE TABLE Produit(
         ON DELETE CASCADE
 );
 
-CREATE TABLE SaisonDisponibilité(
-    DateDébut DATE,
+CREATE TABLE SaisonDisponibilite(
+    DateDebut DATE,
     DateFin DATE,
-    PRIMARY KEY (DateDébut, DateFin),
-    CONSTRAINT ck_dates_saison CHECK (DateDébut < DateFin)
+    PRIMARY KEY (DateDebut, DateFin),
+    CONSTRAINT ck_dates_saison CHECK (DateDebut < DateFin)
 );
 
-CREATE TABLE Caractéristique(
+CREATE TABLE Caracteristique(
     idProduit INT,
-    nomCaractéristique VARCHAR2(50)
-        CHECK (nomCaractéristique IN ('bio', 'allergènes', 'pays d’origine')),
+    nomCaracteristique VARCHAR2(50)
+        CHECK (nomCaracteristique IN ('bio', 'allergènes', 'pays d’origine')),
     valeur VARCHAR2(50),
-    PRIMARY KEY (idProduit, nomCaractéristique),
+    PRIMARY KEY (idProduit, nomCaracteristique),
         CONSTRAINT fk_idProduit
         FOREIGN KEY (idProduit) 
         REFERENCES Produit(idProduit)
@@ -73,16 +73,16 @@ CREATE TABLE Caractéristique(
 
 CREATE TABLE ProduitAPourSaison(
     idProduit INT,
-    DateDébut DATE,
+    DateDebut DATE,
     DateFin DATE,
-    PRIMARY KEY (idProduit, DateDébut, DateFin),
+    PRIMARY KEY (idProduit, DateDebut, DateFin),
     CONSTRAINT fk_idProduit_saison
         FOREIGN KEY (idProduit) 
         REFERENCES Produit(idProduit)
         ON DELETE CASCADE,
-    CONSTRAINT fk_saison_disponibilité
-        FOREIGN KEY (DateDébut, DateFin) 
-        REFERENCES SaisonDisponibilité(DateDébut, DateFin)
+    CONSTRAINT fk_saison_disponibilite
+        FOREIGN KEY (DateDebut, DateFin) 
+        REFERENCES SaisonDisponibilite(DateDebut, DateFin)
         ON DELETE CASCADE
 );
 
@@ -133,18 +133,18 @@ CREATE TABLE Commande(
 CREATE TABLE Contenant(
     idContenant INT PRIMARY KEY,
     TypeContenant VARCHAR2(30)
-        CHECK (TypeContenant IN ('bocal en verre', 'sachet kraft', 'sachet tissu', 'papier ciré', 'autre')),
-    CapacitéContenant INT CHECK (CapacitéContenant >= 0),
+        CHECK (TypeContenant IN ('bocal en verre', 'sachet kraft', 'sachet tissu', 'papier cire', 'autre')),
+    CapaciteContenant INT CHECK (CapaciteContenant >= 0),
     StockDisponible INT CHECK (StockDisponible >= 0),
     ReutilisableContenant INT CHECK (ReutilisableContenant IN (0,1))
 );
 
 CREATE TABLE LotContenant(
-    DateRéceptionC DATE,
+    DateReceptionC DATE,
     idContenant INT,
-    QuantitéDisponibleC INT CHECK (QuantitéDisponibleC >= 0),
+    QuantiteDisponibleC INT CHECK (QuantiteDisponibleC >= 0),
     PrixVenteCTTC INT CHECK (PrixVenteCTTC >= 0),
-    PRIMARY KEY (DateRéceptionC, idContenant),
+    PRIMARY KEY (DateReceptionC, idContenant),
     CONSTRAINT fk_lot_contenant
         FOREIGN KEY (idContenant) 
         REFERENCES Contenant(idContenant)
@@ -153,21 +153,21 @@ CREATE TABLE LotContenant(
 
 CREATE TABLE LotProduit(
     ModeConditionnement VARCHAR2(30) 
-        CHECK (ModeConditionnement IN ('vrac', 'préconditionné')),
+        CHECK (ModeConditionnement IN ('vrac', 'preconditionne')),
     PoidsUnitaire INT,
-    DateRéceptionP DATE,
-    QuantitéDisponibleP INT CHECK (QuantitéDisponibleP >= 0),
-    DatePéremptionType VARCHAR2(30) CHECK (DatePéremptionType IN ('DLC', 'DLUO')),
+    DateReceptionP DATE,
+    QuantiteDisponibleP INT CHECK (QuantiteDisponibleP >= 0),
+    DatePeremptionType VARCHAR2(30) CHECK (DatePeremptionType IN ('DLC', 'DLUO')),
     DatePeremption DATE,
     PrixVentePTTC INT CHECK (PrixVentePTTC >= 0),
     PrixAchatProducteur INT CHECK (PrixAchatProducteur >= 0),
     idProduit INT,
-    PRIMARY KEY (DateRéceptionP, idProduit, ModeConditionnement, PoidsUnitaire),
+    PRIMARY KEY (DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire),
     CONSTRAINT fk_lot_produit 
         FOREIGN KEY (idProduit) REFERENCES Produit(idProduit) 
         ON DELETE CASCADE,
     CONSTRAINT ck_date_peremption 
-        CHECK (DateRéceptionP < DatePeremption)
+        CHECK (DateReceptionP < DatePeremption)
 );
 
 CREATE TABLE LigneCommandeProduit(
@@ -176,8 +176,8 @@ CREATE TABLE LigneCommandeProduit(
     idProduit INT,
     ModeConditionnement VARCHAR2(30),
     PoidsUnitaire INT,
-    DateRéceptionP DATE,
-    QuantitéCommandéeP INT CHECK (QuantitéCommandéeP > 0),
+    DateReceptionP DATE,
+    QuantiteCommandeeP INT CHECK (QuantiteCommandeeP > 0),
     PrixUnitaireP INT CHECK (PrixUnitaireP > 0),
     SousTotalLigneP INT CHECK (SousTotalLigneP > 0),
     PRIMARY KEY (numLigneP, idCommande),
@@ -186,8 +186,8 @@ CREATE TABLE LigneCommandeProduit(
         REFERENCES Commande(idCommande)
         ON DELETE CASCADE,
     CONSTRAINT fk_ligne_commande_produit_lot
-        FOREIGN KEY (DateRéceptionP, idProduit, ModeConditionnement, PoidsUnitaire) 
-        REFERENCES LotProduit(DateRéceptionP, idProduit, ModeConditionnement, PoidsUnitaire)
+        FOREIGN KEY (DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire) 
+        REFERENCES LotProduit(DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire)
         ON DELETE CASCADE
 );
 
@@ -195,8 +195,8 @@ CREATE TABLE LigneCommandeContenant(
     numLigneC INT,
     idCommande INT,
     idContenant INT,
-    DateRéceptionC DATE,
-    QuantitéCommandéeC INT CHECK (QuantitéCommandéeC > 0),
+    DateReceptionC DATE,
+    QuantiteCommandeeC INT CHECK (QuantiteCommandeeC > 0),
     PrixUnitaireC INT CHECK (PrixUnitaireC > 0),
     SousTotalLigneC INT CHECK (SousTotalLigneC > 0),
     PRIMARY KEY (numLigneC, idCommande),
@@ -205,16 +205,16 @@ CREATE TABLE LigneCommandeContenant(
         REFERENCES Commande(idCommande)
         ON DELETE CASCADE,
     CONSTRAINT fk_ligne_commande_contenant_lot
-        FOREIGN KEY (DateRéceptionC, idContenant) 
-        REFERENCES LotContenant(DateRéceptionC, idContenant)
+        FOREIGN KEY (DateReceptionC, idContenant) 
+        REFERENCES LotContenant(DateReceptionC, idContenant)
         ON DELETE CASCADE
 );
 
-CREATE TABLE CommandeàLivrer(
+CREATE TABLE CommandeaLivrer(
     idCommande INT PRIMARY KEY,
-    StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En préparation', 'Prête', 'En livraison', 'Livrée', 'Annulée')),
+    StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En preparation', 'Prête', 'En livraison', 'Livree', 'Annulee')),
     FraisLivraison INT CHECK (FraisLivraison >= 0),
-    DateLivraisonEstimée DATE,
+    DateLivraisonEstimee DATE,
     AdresseLivraison VARCHAR2(255),
     CONSTRAINT fk_commande_livrer_commande
         FOREIGN KEY (idCommande) 
@@ -228,7 +228,7 @@ CREATE TABLE CommandeàLivrer(
 
 CREATE TABLE CommandeenBoutique(
     idCommande INT PRIMARY KEY,
-    StatutCommandeB VARCHAR2(30) CHECK (StatutCommandeB IN ('En préparation', 'Prête', 'En livraison', 'Récupérée', 'Annulée')),
+    StatutCommandeB VARCHAR2(30) CHECK (StatutCommandeB IN ('En preparation', 'Prête', 'En livraison', 'Recuperee', 'Annulee')),
     CONSTRAINT fk_commande_boutique_commande
         FOREIGN KEY (idCommande) 
         REFERENCES Commande(idCommande)
@@ -239,7 +239,7 @@ CREATE TABLE PerteProduit(
     idPerteP INT,
     idProduit INT,
     DatePerteP DATE,
-    QuantitéPerdueP INT CHECK (QuantitéPerdueP > 0),
+    QuantitePerdueP INT CHECK (QuantitePerdueP > 0),
     NaturePerteP VARCHAR2(255) CHECK (NaturePerteP IN ('vol','casse')),
     PRIMARY KEY (idPerteP, idProduit),
     CONSTRAINT fk_perte_produit
@@ -252,7 +252,7 @@ CREATE TABLE PerteContenant(
     idPerteC INT,
     idContenant INT,
     DatePerteC DATE,
-    QuantitéPerdueC INT CHECK (QuantitéPerdueC > 0),
+    QuantitePerdueC INT CHECK (QuantitePerdueC > 0),
     NaturePerteC VARCHAR2(255) CHECK (NaturePerteC IN ('vol','casse')),
     PRIMARY KEY (idPerteC, idContenant),
     CONSTRAINT fk_perte_contenant
@@ -271,7 +271,7 @@ CREATE TABLE ProduitStock(
 
 CREATE TABLE ProduitCommande(
     idProduit INT PRIMARY KEY,
-    DélaiDisponibilitéHeure INT CHECK (DélaiDisponibilitéHeure > 0),
+    DelaiDisponibiliteHeure INT CHECK (DelaiDisponibiliteHeure > 0),
     CONSTRAINT fk_produit_commande
         FOREIGN KEY (idProduit) 
         REFERENCES Produit(idProduit)
@@ -279,5 +279,81 @@ CREATE TABLE ProduitCommande(
 );
 
 
+CREATE TRIGGER Verif_Suppression_Client
+-- Trigger pour vérifier si un client a des commandes avant suppression
+BEFORE DELETE ON Client -- avant la suppression d'un client (une ligne de la table Client)
+FOR EACH ROW
+BEGIN
+    DECLARE
+        nb_cmd INT;
+    BEGIN
+        SELECT COUNT(*) INTO nb_cmd
+        FROM Commande
+        WHERE idClient = :OLD.idClient; -- Utilisation de :OLD pour accéder a l'ancienne valeur de idClient
+
+        IF nb_cmd > 0 THEN
+            RAISE_APPLICATION_ERROR(-31, 'Ce client a encore des commandes.');
+        END IF;
+    END;
+END;
+/
 
 
+CREATE TRIGGER Verif_sous_total_ligneP
+-- Trigger pour vérifier que le sous-total d'une ligne de commande produit est correct
+BEFORE INSERT OR UPDATE ON LigneCommandeProduit
+FOR EACH ROW
+BEGIN
+    IF NEW.SousTotalLigneP <> NEW.QuantiteCommandeeP * NEW.PrixUnitaireP THEN
+        RAISE_APPLICATION_ERROR(-32, 'Le sous-total de la ligne de commande produit est incorrect.');
+    END IF;
+END;
+/
+
+CREATE TRIGGER Verif_sous_total_ligneC
+-- Trigger pour vérifier que le sous-total d'une ligne de commande contenant est correct
+BEFORE INSERT OR UPDATE ON LigneCommandeContenant
+FOR EACH ROW
+BEGIN
+    IF NEW.SousTotalLigneC <> NEW.QuantiteCommandeeC * NEW.PrixUnitaireC THEN
+        RAISE_APPLICATION_ERROR(-32, 'Le sous-total de la ligne de commande contenant est incorrect.');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER verif_statut_commande
+BEFORE UPDATE ON CommandeaLLivrer
+FOR EACH ROW
+BEGIN
+    IF :OLD.StatutCommande IN ('Livrée', 'Annulée')
+       AND :NEW.StatutCommande NOT IN ('Livrée', 'Annulée') THEN
+        RAISE_APPLICATION_ERROR(-20005, 'Statut invalide : une commande livrée ou annulée ne peut pas être réouverte');
+    END IF;
+END;
+/
+
+
+CREATE TRIGGER Verif_commandeP_stock
+-- Trigger pour vérifier que la quantité commandée d'un produit ne dépasse pas le stock disponible
+BEFORE INSERT OR UPDATE ON LigneCommandeProduit
+FOR EACH ROW
+BEGIN
+    DECLARE
+        stock_disponible FLOAT;
+        BEGIN
+            SELECT StockDisponible INTO stock_disponible FROM Produit WHERE idProduit = New.idProduit;
+            IF  :NEW.QuantiteCommandeeP > stock_disponible THEN
+                RAISE_APPLICATION_ERROR(-34, 'Quantité commandée pour ce produit > stock disponible')
+
+
+CREATE TRIGGER Verif_commandeC_stock
+-- Trigger pour vérifier que la quantité commandée d'un contenant ne dépasse pas le stock disponible
+BEFORE INSERT OR UPDATE ON LigneCommandeContenant
+FOR EACH ROW
+BEGIN
+    DECLARE
+        stock_disponible FLOAT;
+        BEGIN
+            SELECT StockDisponible INTO stock_disponible FROM Produit WHERE idContenant = New.idContenant;
+            IF  :NEW.QuantiteCommandeeC > stock_disponible THEN
+                RAISE_APPLICATION_ERROR(-35, 'Quantité commandée pour ce contenant > stock disponible')
