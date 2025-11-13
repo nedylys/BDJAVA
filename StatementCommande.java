@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.text.SimpleDateFormat;
 
 public class StatementCommande{
     static final String STDelai = "select DelaiDisponibilitéHeure from ProduitCommande where idProduit = ? ";
@@ -13,13 +14,42 @@ public class StatementCommande{
 
     static final String STVerifieIDContenant = "select idContenant from Contenant where idContenant = ?"; 
 
-    static final String STQteStock = "select sum(PoidsUnitaire*QuantitéDisponibleP) from LotProduit where idProduit = ?";
+    static final String STQteStock = "select sum(PoidsUnitaire*QuantiteDisponibleP) from LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
     
-    static final String STQteContenant = "select sum(QuantitéDisponibleC) from LotContenant where idContenant = ?";
+    static final String STQteContenant = "select sum(QuantiteDisponibleC) from LotContenant where idContenant = ?";
     
-    static final String STPrixProduit = "select PrixVentePTTC from LotProduit where idProduit = ?";
+    static final String STPrixProduit = "select PrixVentePTTC from LotProduit where idProduit = ? and ModeConditionnement = ?";
 
     static final String STPrixContenant = "select PrixVenteCTTC from LotContenant where idContenant = ?";
+    
+    static final String STNvClient = " INSERT INTO Client VALUES(?,?,?,?,?) ";
+
+    static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme ";
+
+    static final String STNBIDCOMMANDE = "SELECT COUNT(*) FROM Commande";
+
+    static final String STNBLIGNEP = "SELECT COUNT(*) FROM LigneCommandeProduit";
+
+    static final String STNBLIGNEC = "SELECT COUNT(*) FROM LigneCommandeContenant";
+
+    static final String STNVCOMMANDE = " INSERT INTO Commande VALUES(?,TO_DATE(?, 'YYYY-MM-DD'),TO_DATE(?, 'HH24:MI:SS'),?,?,?) ";
+
+    static final String STNVLIGNEP = " INSERT INTO LigneCommandeProduit VALUES(?,?,?,?,?,TO_DATE(?, 'YYYY-MM-DD'),?,?,?) ";
+
+    static final String STNVLIGNEC = " INSERT INTO LigneCommandeContenant VALUES(?,?,?,TO_DATE(?, 'YYYY-MM-DD'),?,?,?) ";
+
+    static final String STCARACTP = "SELECT PrixVentePTTC,DateReceptionP,PoidsUnitaire,QuantiteDisponibleP FROM LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
+
+    static final String STCARACTC = "SELECT DateReceptionC,QuantiteDisponibleC,PrixVenteCTTC FROM LotContenant where idContenant = ?";
+    
+    
+    //static private String DATESQL = "TO_DATE(?, 'YYYY-MM-DD')";
+
+    //static private String HEURESQL = "TO_DATE(?, 'HH24:MI:SS')";
+
+    static final String STCOMMBOUTIQUE = "INSERT INTO CommandeenBoutique VALUES(?,'En preparation')";
+    
+    static final String STCOMMLIVRER = "INSERT INTO CommandaLivrer VALUES(?,'En preparation',?,?,?)";
     
     private Connection conn;
     
@@ -27,7 +57,7 @@ public class StatementCommande{
         this.conn = conn;
     }
    
-    public double calculePrixProduit(int idProduit, double quantite){
+    public double calculePrixProduit(int idProduit, double quantite,String ModeConditionnement){
         // Retourne le prix d'une commande d'un produit
         try{
         PreparedStatement stmt = conn.prepareStatement(STPrixProduit);
@@ -62,7 +92,7 @@ public class StatementCommande{
       }
     }
     
-    public boolean getDispo(int idProduit,double quantite){
+    public boolean getDispo(int idProduit,double quantite,String ModeConditionnement,int poidsUnitaire){
     // Verfie si le produit en stock peut être obtenu
     try{
         PreparedStatement stmt1 = conn.prepareStatement(STSaison);
@@ -80,6 +110,8 @@ public class StatementCommande{
         }
         PreparedStatement stmt2 = conn.prepareStatement(STQteStock);
         stmt2.setInt(1, idProduit);
+        stmt2.setString(2,ModeConditionnement);
+        stmt2.setInt(3,poidsUnitaire);
         ResultSet rset2 = stmt2.executeQuery();
         rset2.next();
         double qtedispo = rset2.getDouble(1);
@@ -201,5 +233,221 @@ public class StatementCommande{
             return false;
       }
     }
-    
+    public int nbClient(){
+    // Retourn le nb d'ID client dans la base de données
+        try{
+        PreparedStatement stmt = conn.prepareStatement(STNBIDCLIENT);
+        ResultSet rset = stmt.executeQuery();
+        rset.next();
+        int nbIdclient = rset.getInt(1);
+        rset.close();
+        stmt.close();
+        return nbIdclient;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    }
+    public int nbIdCommade(){
+    // Retourn le nb d'ID commande dans la base de données
+        try{
+        PreparedStatement stmt = conn.prepareStatement(STNBIDCOMMANDE);
+        ResultSet rset = stmt.executeQuery();
+        rset.next();
+        int nbCommande = rset.getInt(1);
+        rset.close();
+        stmt.close();
+        return nbCommande;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    }
+    public int nbLigneP(){
+    // Retourn le nb de lignes de commandeP dans la base de données
+        try{
+        PreparedStatement stmt = conn.prepareStatement(STNBLIGNEP);
+        ResultSet rset = stmt.executeQuery();
+        rset.next();
+        int nbLigneP = rset.getInt(1);
+        rset.close();
+        stmt.close();
+        return nbLigneP;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    }
+    public int nbLigneConten(){
+    // Retourn le nb de lignes de commandeContenant dans la base de données
+        try{
+        PreparedStatement stmt = conn.prepareStatement(STNBLIGNEC);
+        ResultSet rset = stmt.executeQuery();
+        rset.next();
+        int nbLigneC = rset.getInt(1);
+        rset.close();
+        stmt.close();
+        return nbLigneC;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    }
+    public void ajouteNovClient(String[] argsClient,int idClient){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STNvClient);
+        for (int i = 0; i<5;i++){
+            stmt.setString(i+1,argsClient[i]);
+        }
+        stmt.setInt(5,idClient);
+        int nbAjout = stmt.executeUpdate();
+        stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+    public void creeCommande(int idCommande,int idClient,String[] argsCommande){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STNVCOMMANDE);
+        stmt.setInt(1,idCommande);
+        java.util.Date now = new java.util.Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm:ss");
+        String date = sdf.format(now);
+        String time = sdf2.format(now);
+        stmt.setString(2,date);
+        stmt.setString(3,time);
+        stmt.setString(4,argsCommande[0]);
+        stmt.setString(5, argsCommande[1]);
+        stmt.setInt(6, idClient);
+        int nbAjout = stmt.executeUpdate();
+        stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+    public void commandeBoutique(int idCommande){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STCOMMBOUTIQUE);
+        stmt.setInt(1,idCommande);
+        int nbAjout = stmt.executeUpdate();
+        stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+    public void commandeLivrer(int idCommande,double fraisLivraison,String[] argsLivraison){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STCOMMLIVRER);
+        stmt.setInt(1,idCommande);
+        stmt.setDouble(2, fraisLivraison);
+        stmt.setString(3, argsLivraison[0]);
+        stmt.setString(4, argsLivraison[1]);
+        int nbAjout = stmt.executeUpdate();
+        stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+    public void ajouteCommandeP(int[] argsCommandeP,String ModeConditionnement,double[] argsDouble,String date){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STNVLIGNEP);
+        for (int i = 0; i<3;i++){
+            stmt.setInt(i+1,argsCommandeP[i]);
+        }
+        stmt.setString(4,ModeConditionnement);
+        stmt.setInt(5,argsCommandeP[3]);
+        stmt.setString(6,date);
+        stmt.setDouble(7, argsDouble[0]);
+        stmt.setDouble(8, argsDouble[1]);
+        stmt.setDouble(9, argsDouble[2]);
+        int nbAjout = stmt.executeUpdate();
+        stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+    public void ajouteCommandeC(int[] argsCommandeC,double[] argsDouble,String date,int quantiteC){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STNVLIGNEC);
+        for (int i = 0; i<3;i++){
+            stmt.setInt(i+1,argsCommandeC[i]);
+        }
+        stmt.setString(4,date);
+        stmt.setInt(5,quantiteC);
+        stmt.setDouble(6, argsDouble[0]);
+        stmt.setDouble(7, argsDouble[1]);
+        int nbAjout = stmt.executeUpdate();
+        stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+    public double ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP){
+        try{
+        PreparedStatement stmt = conn.prepareStatement(STCARACTP);
+        stmt.setInt(1,argsCommandeP[2]);
+        stmt.setString(2, ModeConditionnement);
+        stmt.setInt(3,argsCommandeP[3]);
+        ResultSet rset = stmt.executeQuery();
+        double prixTotal = 0;
+        while(quantiteP > 0){
+            rset.next();
+            double qtedispo = rset.getDouble(4);
+            double prix = rset.getDouble(1);
+            String date = rset.getString(2);
+            double quantite = Math.min(quantiteP,qtedispo);
+            double sousTotal = quantite*prix;
+            double[] argsDouble = {quantite,prix,sousTotal};
+            ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, date);
+            prixTotal += sousTotal;
+            quantiteP -= qtedispo;
+        }
+        rset.close();
+        stmt.close();
+        return prixTotal;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    }
+    public double ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC){
+        try{
+        PreparedStatement stmt = conn.prepareStatement(STCARACTC);
+        stmt.setInt(1,argsCommandeC[2]);
+        ResultSet rset = stmt.executeQuery();
+        double prixTotal = 0;
+        while(quantiteC> 0){
+            rset.next();
+            int qtedispo = rset.getInt(2);
+            double prix = rset.getDouble(3);
+            String date = rset.getString(1);
+            double sousTotal = quantiteC*prix;
+            int quantite = Math.min(quantiteC,qtedispo);
+            double[] argsDouble = {prix,sousTotal};
+            ajouteCommandeC(argsCommandeC,argsDouble,date,quantite);
+            prixTotal += sousTotal;
+            quantiteC -= qtedispo;
+        }
+        rset.close();
+        stmt.close();
+        return prixTotal;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    }
+              
 }
