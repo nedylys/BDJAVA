@@ -1,5 +1,8 @@
+package main;
+
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class StatementCommande{
     static final String STDelai = "select DelaiDisponibilitéHeure from ProduitCommande where idProduit = ? ";
@@ -21,8 +24,16 @@ public class StatementCommande{
     static final String STPrixProduit = "select PrixVentePTTC from LotProduit where idProduit = ? and ModeConditionnement = ?";
 
     static final String STPrixContenant = "select PrixVenteCTTC from LotContenant where idContenant = ?";
+
+    static final String STIDCLIENT = "select idClient from Client where emailClient = ?";
     
     static final String STNvClient = " INSERT INTO Client VALUES(?,?,?,?,?) ";
+
+    static final String STNVADRESSECLIENT = " INSERT INTO ClientAPourAdresseLivraison VALUES(?,?) ";
+    
+    static final String STNVADRESSE = " INSERT INTO AdresseLivraison VALUES(?) ";
+
+    static final String STGETADRESS = "select AdresseLivraison from ClientAPourAdresseLivraison where idClient = ?";
 
     static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme ";
 
@@ -49,7 +60,7 @@ public class StatementCommande{
 
     static final String STCOMMBOUTIQUE = "INSERT INTO CommandeenBoutique VALUES(?,'En preparation')";
     
-    static final String STCOMMLIVRER = "INSERT INTO CommandaLivrer VALUES(?,'En preparation',?,?,?)";
+    static final String STCOMMLIVRER = "INSERT INTO CommandaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?)";
     
     private Connection conn;
     
@@ -119,6 +130,7 @@ public class StatementCommande{
         stmt2.close();
         if (qtedispo < quantite){
             System.out.println("Quantité insuffisante");
+            System.out.println("La quantite disponible est " + qtedispo);
             return false;
         }else{
             return true;
@@ -129,14 +141,13 @@ public class StatementCommande{
             return false;
       }
     }
-    
-    public double getDelaiDispo(int idProduit){
+    public int getDelaiDispo(int idProduit){
       try{
         PreparedStatement stmt = conn.prepareStatement(STDelai);
         stmt.setInt(1, idProduit);
         ResultSet rset = stmt.executeQuery();
         rset.next();
-        double disponibilite =  rset.getDouble(1);
+        int disponibilite =  rset.getInt(1);
         return disponibilite;
       }catch (SQLException e) {
             System.err.println("failed");
@@ -146,6 +157,7 @@ public class StatementCommande{
     }
 
     public boolean inCommande(int idProduit){
+        // Fonction qui retourne true si le produit est sur commande
         try{
             PreparedStatement stmt = conn.prepareStatement(STCommande);
             stmt.setInt(1, idProduit);
@@ -218,11 +230,12 @@ public class StatementCommande{
         stmt.setInt(1, idContenant);
         ResultSet rset = stmt.executeQuery();
         rset.next();
-        double qtedispo = rset.getDouble(1);
+        int qtedispo = rset.getInt(1);
         rset.close();
         stmt.close();
         if (qtedispo < quantite){
             System.out.println("Quantité insuffisante");
+            System.out.println("La quatité disponible est " + qtedispo);
             return false;
         }else{
             return true;
@@ -281,7 +294,7 @@ public class StatementCommande{
             return 0;
       }
     }
-    public int nbLigneConten(){
+    public int nbLigneContenant(){
     // Retourn le nb de lignes de commandeContenant dans la base de données
         try{
         PreparedStatement stmt = conn.prepareStatement(STNBLIGNEC);
@@ -297,6 +310,27 @@ public class StatementCommande{
             return 0;
       }
     }
+    public int getIdClient(String emailClient){
+        // Retourne l'Id client à partir de l'email
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STIDCLIENT);
+        stmt.setString(1,emailClient);
+        ResultSet rst =  stmt.executeQuery();
+        int idClient = 0;
+        if (rst.next()){
+            idClient = rst.getInt(1);
+        }else{
+            System.out.println("Ce client n'existe pas");
+        }
+        rst.close();
+        stmt.close();
+        return idClient;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    } 
     public void ajouteNovClient(String[] argsClient,int idClient){
     try{
         PreparedStatement stmt = conn.prepareStatement(STNvClient);
@@ -305,10 +339,58 @@ public class StatementCommande{
         }
         stmt.setInt(5,idClient);
         int nbAjout = stmt.executeUpdate();
+        if (nbAjout == 1){
+            System.out.println("Le client a bien été ajouté dans la base de données");
+        }else{
+            System.out.println("Echec de l'ajout du nouveau client");
+        }
         stmt.close();
       }catch (SQLException e) {
             System.err.println("failed");
             e.printStackTrace(System.err);
+      }
+    }
+    public void ajouteNovAdresse(String adresseClient,String emailClient){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
+        PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
+        stmt.setString(1,adresseClient);
+        stmt2.setString(1,emailClient);
+        int nbAjout = stmt.executeUpdate();
+        int nbAjout2 = stmt2.executeUpdate();
+        if (nbAjout2 + nbAjout == 2){
+            System.out.println("L'adresse a bien été ajoutée ");
+        }else{
+            System.out.println("Echec de l'ajout");
+        }
+        stmt.close();
+        stmt2.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+    public ArrayList<String> getAdresseClient(int idClient){
+    // Retourne les adressesLivraison d'un client à partir de son idClient
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STGETADRESS);
+        stmt.setInt(1,idClient);
+        ResultSet rst = stmt.executeQuery();
+        int iAdresse = 0;
+        ArrayList<String> adresseArray = new ArrayList<>(); 
+        while (rst.next()){
+            iAdresse++;
+            String adresse = rst.getString(1);
+            adresseArray.add(adresse);
+            System.out.println(iAdresse +". " + adresse);
+        }
+        rst.close();
+        stmt.close();
+        return adresseArray;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return null;
       }
     }
     public void creeCommande(int idCommande,int idClient,String[] argsCommande){
@@ -351,6 +433,11 @@ public class StatementCommande{
         stmt.setString(3, argsLivraison[0]);
         stmt.setString(4, argsLivraison[1]);
         int nbAjout = stmt.executeUpdate();
+        if (nbAjout > 0){
+            System.out.println("La création de la CommandeLivrer a bien été réussie");
+        }else{
+            System.out.println("Echec de la création de la CommandeLivrer");
+        }
         stmt.close();
       }catch (SQLException e) {
             System.err.println("failed");
@@ -428,7 +515,7 @@ public class StatementCommande{
         stmt.setInt(1,argsCommandeC[2]);
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
-        while(quantiteC> 0){
+        while(quantiteC > 0){
             rset.next();
             int qtedispo = rset.getInt(2);
             double prix = rset.getDouble(3);
