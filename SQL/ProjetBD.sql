@@ -298,6 +298,8 @@ BEGIN
 END;
 /
 
+ALTER TABLE LOTPRODUIT
+MODIFY (POIDSUNITAIRE NUMBER(10,2));
 
 CREATE TRIGGER Verif_sous_total_ligneP
 -- Trigger pour vérifier que le sous-total d'une ligne de commande produit est correct
