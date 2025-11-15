@@ -11,11 +11,13 @@ public class StatementCommande{
     
     static final String STDispo = "select idProduit from ProduitCommande where idProduit = ? ";
     
-    static final String STSaison = "select DateDebut,DateFin from ProduitAPourSaison where idProduit = ?";
+    static final String STSaison = "select DateDébut,DateFin from ProduitAPourSaison where idProduit = ?";
     
     static final String STVerifieIDProduit = "select idProduit from Produit where idProduit = ?"; 
 
     static final String STVerifieIDContenant = "select idContenant from Contenant where idContenant = ?"; 
+
+    static final String STVERIFPOIDS = "select PoidsUnitaire from LotProduit where idProduit = ? and ModeConditionnement = 'preconditionne'"; 
 
     static final String STQteStock = "select sum(PoidsUnitaire*QuantiteDisponibleP) from LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
     
@@ -116,7 +118,7 @@ public class StatementCommande{
         rset1.close();
         stmt1.close();
         if(!(now.after(debut)) || !(now.before(fin))){
-            System.out.println("Le produit n'est pas disponible");
+            System.out.println("Le produit n'est pas disponible . Pas la bonne saison");
             return false;
         }
         PreparedStatement stmt2 = conn.prepareStatement(STQteStock);
@@ -155,7 +157,25 @@ public class StatementCommande{
             return 0;
       }
     }
-
+    public void choisirPoidsUnitaire(int idProduit){
+        try{
+            PreparedStatement stmt = conn.prepareStatement(STVERIFPOIDS);
+            stmt.setInt(1, idProduit);
+            ResultSet rset = stmt.executeQuery();
+            ArrayList<Integer> listePoids = new ArrayList<>();
+            int iPoids = 0; 
+            while (rset.next()){
+                iPoids++;
+                int poids = rset.getInt(1);
+                System.out.println(iPoids + ". " + poids);
+            }
+            rset.close();
+            stmt.close();
+        } catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+        }
+    }
     public boolean inCommande(int idProduit){
         // Fonction qui retourne true si le produit est sur commande
         try{

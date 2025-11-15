@@ -42,20 +42,26 @@ public class PassCommande{
         }
     }
     public void commandeProduit(){
-        System.out.println(" Entrer l'idProduit : ");
+        System.out.println("Entrer l'idProduit : ");
         int idProduit = scan.nextInt();
         scan.nextLine();
         if (!(statementcomm.verifieIdProduit(idProduit))){
-            System.out.println("L'idProduit est faux");
             commandeProduit();
         }
-        System.out.println(" Entrer le Mode de Conditionnement : ");
+        System.out.println("Chosissez le Mode de Conditionnement : vrac ou preconditionne ");
+        System.out.println("Entrer le Mode de Conditionnement : ");
         String ModeConditionnement = scan.nextLine();
         int PoidsUnitaire;
-        if (ModeConditionnement == "En vrac"){
+        while (!(ModeConditionnement.equals("vrac")) || !(ModeConditionnement.equals("preconditionne"))){
+            System.out.println("Mauvaise saisie ");
+            System.out.println("Entrer le Mode de Conditionnement : ");
+            ModeConditionnement = scan.nextLine();
+        }
+        if (ModeConditionnement.equals("vrac")){
             PoidsUnitaire = 1;
         }else{
-            System.out.println(" Entrer le poids unitaire : ");
+            System.out.println("Entrer le poids unitaire : ");
+            statementcomm.choisirPoidsUnitaire(idProduit);
             PoidsUnitaire = scan.nextInt();
             scan.nextLine();
         }
