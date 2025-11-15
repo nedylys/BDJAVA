@@ -44,7 +44,7 @@ CREATE TABLE Produit(
     CategorieProduit VARCHAR2(30)
          CHECK (CategorieProduit IN ('Fromage', 'boisson', 'cereales', 'legumineuse', 'fruits secs', 'huile')),
     DescriptionProduit VARCHAR2(255),
-    StockProduit INT CHECK (StockProduit >= 0),
+    StockProduit NUMBER(10,2) CHECK (StockProduit >= 0),
     idProducteur INT,
     CONSTRAINT fk_produit_producteur
         FOREIGN KEY (idProducteur) 
@@ -135,7 +135,7 @@ CREATE TABLE Contenant(
     TypeContenant VARCHAR2(30)
         CHECK (TypeContenant IN ('bocal en verre', 'sachet kraft', 'sachet tissu', 'papier cire', 'autre')),
     CapaciteContenant INT CHECK (CapaciteContenant >= 0),
-    StockDisponible INT CHECK (StockDisponible >= 0),
+    StockDisponible FLOAT CHECK (StockDisponible >= 0),
     ReutilisableContenant INT CHECK (ReutilisableContenant IN (0,1))
 );
 
@@ -386,5 +386,54 @@ BEGIN
             SELECT StockContenant INTO quantite_perdueC FROM Contenant WHERE idContenant = New.idContenant;
             IF  :NEW.QuantitePerdueC > quantite_perdueC THEN
                 RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce contenant > stock disponible')
+END;
+/
+
+CREATE TRIGGER verif_stock_produit
+BEFORE INSERT OR UPDATE ON LotProduit
+FOR EACH ROW
+DECLARE
+    total_stock FLOAT;
+BEGIN
+    SELECT SUM(QuantiteDisponibleP) INTO total_stock FROM LotProduit WHERE idProduit = :NEW.idProduit AND (DateReceptionP != :OLD.DateReceptionP OR :OLD.DateReceptionP IS NULL);
+    IF total_stock IS NULL THEN
+        total_stock := :NEW.QuantiteDisponibleP;
+    ELSE
+        total_stock := total_stock + :NEW.QuantiteDisponibleP;
+    END IF;
+    DECLARE
+        stock_produit FLOAT;
+    BEGIN
+        SELECT StockProduit INTO stock_produit FROM Produit WHERE idProduit = :NEW.idProduit;
+
+        IF total_stock != stock_produit THEN
+            RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du produit.');
+        END IF;
+    END;
+END;
+/
+
+CREATE TRIGGER verif_stock_contenant
+BEFORE INSERT OR UPDATE ON LotContenant
+FOR EACH ROW
+DECLARE
+    total_stock FLOAT;
+BEGIN
+    SELECT SUM(QuantiteDisponibleC) INTO total_stock FROM LotContenant WHERE idContenant = :NEW.idContenant
+      AND (DateReceptionC != :OLD.DateReceptionC OR :OLD.DateReceptionC IS NULL);
+    IF total_stock IS NULL THEN
+        total_stock := :NEW.QuantiteDisponibleC;
+    ELSE
+        total_stock := total_stock + :NEW.QuantiteDisponibleC;
+    END IF;
+    DECLARE
+        stock_contenant FLOAT;
+    BEGIN
+        SELECT StockDisponible INTO stock_contenant FROM Contenant WHERE idContenant = :NEW.idContenant;
+
+        IF total_stock != stock_contenant THEN
+            RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du contenant.');
+        END IF;
+    END;
 END;
 /
