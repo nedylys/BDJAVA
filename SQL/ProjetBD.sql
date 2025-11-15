@@ -156,11 +156,11 @@ CREATE TABLE LotProduit(
         CHECK (ModeConditionnement IN ('vrac', 'preconditionne')),
     PoidsUnitaire INT,
     DateReceptionP DATE,
-    QuantiteDisponibleP INT CHECK (QuantiteDisponibleP >= 0),
+    QuantiteDisponibleP FLOAT CHECK (QuantiteDisponibleP >= 0),
     DatePeremptionType VARCHAR2(30) CHECK (DatePeremptionType IN ('DLC', 'DLUO')),
     DatePeremption DATE,
-    PrixVentePTTC INT CHECK (PrixVentePTTC >= 0),
-    PrixAchatProducteur INT CHECK (PrixAchatProducteur >= 0),
+    PrixVentePTTC FLOAT CHECK (PrixVentePTTC >= 0),
+    PrixAchatProducteur FLOAT CHECK (PrixAchatProducteur >= 0),
     idProduit INT,
     PRIMARY KEY (DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire),
     CONSTRAINT fk_lot_produit 
@@ -177,9 +177,9 @@ CREATE TABLE LigneCommandeProduit(
     ModeConditionnement VARCHAR2(30),
     PoidsUnitaire INT,
     DateReceptionP DATE,
-    QuantiteCommandeeP INT CHECK (QuantiteCommandeeP > 0),
-    PrixUnitaireP INT CHECK (PrixUnitaireP > 0),
-    SousTotalLigneP INT CHECK (SousTotalLigneP > 0),
+    QuantiteCommandeeP FLOAT CHECK (QuantiteCommandeeP > 0),
+    PrixUnitaireP FLOAT CHECK (PrixUnitaireP > 0),
+    SousTotalLigneP FLOAT CHECK (SousTotalLigneP > 0),
     PRIMARY KEY (numLigneP, idCommande),
     CONSTRAINT fk_ligne_commande_produit_commande
         FOREIGN KEY (idCommande) 
@@ -197,8 +197,8 @@ CREATE TABLE LigneCommandeContenant(
     idContenant INT,
     DateReceptionC DATE,
     QuantiteCommandeeC INT CHECK (QuantiteCommandeeC > 0),
-    PrixUnitaireC INT CHECK (PrixUnitaireC > 0),
-    SousTotalLigneC INT CHECK (SousTotalLigneC > 0),
+    PrixUnitaireC FLOAT CHECK (PrixUnitaireC > 0),
+    SousTotalLigneC FLOAT CHECK (SousTotalLigneC > 0),
     PRIMARY KEY (numLigneC, idCommande),
     CONSTRAINT fk_ligne_commande_contenant_commande
         FOREIGN KEY (idCommande) 
@@ -213,7 +213,7 @@ CREATE TABLE LigneCommandeContenant(
 CREATE TABLE CommandeaLivrer(
     idCommande INT PRIMARY KEY,
     StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En preparation', 'Prête', 'En livraison', 'Livree', 'Annulee')),
-    FraisLivraison INT CHECK (FraisLivraison >= 0),
+    FraisLivraison FLOAT CHECK (FraisLivraison >= 0),
     DateLivraisonEstimee DATE,
     AdresseLivraison VARCHAR2(255),
     CONSTRAINT fk_commande_livrer_commande

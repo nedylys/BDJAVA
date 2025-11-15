@@ -1,3 +1,5 @@
+package main;
+
 import java.io.Console;
 import java.sql.*;
 import java.util.Scanner;
@@ -26,7 +28,6 @@ public class ConnectionBase{
         int tries = 0;
         while (tries < 3) {
             checkConnection();
-
             if (user.equals(USER) && passwd.equals(PASSWD)) {
                 try {
                     ProcessBuilder builder = new ProcessBuilder();

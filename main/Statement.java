@@ -1,4 +1,4 @@
-import java.sql.*;
+package main;
 
 public class Statement{
     static final String PRE_STMT = "select * from Produit";
