@@ -21,8 +21,14 @@ CREATE TABLE Producteur (
 
 CREATE TABLE Activite(
     TypeActivite VARCHAR2(30) PRIMARY KEY
-        CHECK (TypeActivite IN ('Agriculteur', 'eleveur', 'Fromager'))
+        CHECK (TypeActivite IN ('Agriculteur', 'Eleveur', 'Fromager'))
 );
+
+SELECT constraint_name
+FROM user_constraints
+WHERE table_name = 'Activite' 
+  AND constraint_type = 'C';
+
 
 CREATE TABLE ProducteurAPourActivite(
     idProducteur INT,
@@ -44,11 +50,12 @@ CREATE TABLE Produit(
     CategorieProduit VARCHAR2(30)
          CHECK (CategorieProduit IN ('Fromage', 'boisson', 'cereales', 'legumineuse', 'fruits secs', 'huile')),
     DescriptionProduit VARCHAR2(255),
-    StockProduit NUMBER(10,2) CHECK (StockProduit >= 0),
+    StockProduit FLOAT CHECK (StockProduit >= 0),
     idProducteur INT,
     CONSTRAINT fk_produit_producteur
         FOREIGN KEY (idProducteur) 
         REFERENCES Producteur(idProducteur)
+        
         ON DELETE CASCADE
 );
 
@@ -190,6 +197,9 @@ CREATE TABLE LigneCommandeProduit(
         REFERENCES LotProduit(DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire)
         ON DELETE CASCADE
 );
+ALTER TABLE LotProduit MODIFY (PoidsUnitaire Float);
+
+ALTER TABLE LigneCommandeProduit MODIFY (PoidsUnitaire Float);
 
 CREATE TABLE LigneCommandeContenant(
     numLigneC INT,
@@ -212,7 +222,7 @@ CREATE TABLE LigneCommandeContenant(
 
 CREATE TABLE CommandeaLivrer(
     idCommande INT PRIMARY KEY,
-    StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En preparation', 'Prête', 'En livraison', 'Livree', 'Annulee')),
+    StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee')),
     FraisLivraison FLOAT CHECK (FraisLivraison >= 0),
     DateLivraisonEstimee DATE,
     AdresseLivraison VARCHAR2(255),
@@ -225,15 +235,39 @@ CREATE TABLE CommandeaLivrer(
         REFERENCES AdresseLivraison(AdresseLivraison)
         ON DELETE CASCADE
 );
+ALTER TABLE CommandeaLivrer
+DROP CONSTRAINT SYS_C001323420;
+
+ALTER TABLE CommandeaLivrer
+ADD CONSTRAINT ck_statut_commande_l
+CHECK (StatutCommandeL IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee'));
+
 
 CREATE TABLE CommandeenBoutique(
     idCommande INT PRIMARY KEY,
-    StatutCommandeB VARCHAR2(30) CHECK (StatutCommandeB IN ('En preparation', 'Prête', 'En livraison', 'Recuperee', 'Annulee')),
+    StatutCommandeB VARCHAR2(30) CHECK (StatutCommandeB IN ('En preparation', 'Prete', 'En livraison', 'Recuperee', 'Annulee')),
     CONSTRAINT fk_commande_boutique_commande
         FOREIGN KEY (idCommande) 
         REFERENCES Commande(idCommande)
         ON DELETE CASCADE
 );
+
+ALTER TABLE CommandeenBoutique
+DROP CONSTRAINT SYS_C001323405;
+
+ALTER TABLE CommandeenBoutique
+DROP CONSTRAINT SYS_C001323404;
+
+
+ALTER TABLE CommandeenBoutique
+ADD CONSTRAINT ck_statut_commande_b
+CHECK (StatutCommandeB IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee'));
+
+SELECT StatutCommandeB FROM CommandeenBoutique;
+UPDATE CommandeenBoutique
+SET StatutCommandeB = 'Prete'
+WHERE StatutCommandeB = 'Prête';
+
 
 CREATE TABLE PerteProduit(
     idPerteP INT,
@@ -277,6 +311,9 @@ CREATE TABLE ProduitCommande(
         REFERENCES Produit(idProduit)
         ON DELETE CASCADE
 );
+
+ALTER TABLE LotProduit
+MODIFY (PoidsUnitaire FLOAT);
 
 
 CREATE TRIGGER Verif_Suppression_Client
