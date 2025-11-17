@@ -51,17 +51,17 @@ public class PassCommande{
         System.out.println("Chosissez le Mode de Conditionnement : vrac ou preconditionne ");
         System.out.println("Entrer le Mode de Conditionnement : ");
         String ModeConditionnement = scan.nextLine();
-        int PoidsUnitaire;
+        double PoidsUnitaire;
         while (!(ModeConditionnement.equals("vrac")) || !(ModeConditionnement.equals("preconditionne"))){
             System.out.println("Mauvaise saisie ");
             System.out.println("Entrer le Mode de Conditionnement : ");
             ModeConditionnement = scan.nextLine();
         }
         if (ModeConditionnement.equals("vrac")){
-            PoidsUnitaire = 1;
+            PoidsUnitaire = 1.0;
         }else{
-            System.out.println("Entrer le poids unitaire : ");
             statementcomm.choisirPoidsUnitaire(idProduit);
+            System.out.println("Entrer le poids unitaire : ");
             PoidsUnitaire = scan.nextInt();
             scan.nextLine();
         }
@@ -86,7 +86,7 @@ public class PassCommande{
         if (creecommande){
             int numligneP = statementcomm.nbLigneP();
             int[] argsCommande = {numligneP,idCommande,idProduit};
-            double prix = statementcomm.ajouteCommandeGlobalP(argsCommande, ModeConditionnement, qte);
+            double prix = statementcomm.ajouteCommandeGlobalP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
             System.out.println("Cette commande de ce produit vous couteta " + prix); 
         }else{
             System.out.println(" 1 : Recommander un Produit ");

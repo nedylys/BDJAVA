@@ -51,7 +51,7 @@ public class StatementCommande{
 
     static final String STNVLIGNEC = " INSERT INTO LigneCommandeContenant VALUES(?,?,?,TO_DATE(?, 'YYYY-MM-DD'),?,?,?) ";
 
-    static final String STCARACTP = "SELECT PrixVentePTTC,DateReceptionP,PoidsUnitaire,QuantiteDisponibleP FROM LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
+    static final String STCARACTP = "SELECT PrixVentePTTC,DateReceptionP,QuantiteDisponibleP FROM LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
 
     static final String STCARACTC = "SELECT DateReceptionC,QuantiteDisponibleC,PrixVenteCTTC FROM LotContenant where idContenant = ?";
     
@@ -105,7 +105,7 @@ public class StatementCommande{
       }
     }
     
-    public boolean getDispo(int idProduit,double quantite,String ModeConditionnement,int poidsUnitaire){
+    public boolean getDispo(int idProduit,double quantite,String ModeConditionnement,double poidsUnitaire){
     // Verfie si le produit en stock peut être obtenu
     try{
         PreparedStatement stmt1 = conn.prepareStatement(STSaison);
@@ -124,7 +124,7 @@ public class StatementCommande{
         PreparedStatement stmt2 = conn.prepareStatement(STQteStock);
         stmt2.setInt(1, idProduit);
         stmt2.setString(2,ModeConditionnement);
-        stmt2.setInt(3,poidsUnitaire);
+        stmt2.setDouble(3,poidsUnitaire);
         ResultSet rset2 = stmt2.executeQuery();
         rset2.next();
         double qtedispo = rset2.getDouble(1);
@@ -162,11 +162,11 @@ public class StatementCommande{
             PreparedStatement stmt = conn.prepareStatement(STVERIFPOIDS);
             stmt.setInt(1, idProduit);
             ResultSet rset = stmt.executeQuery();
-            ArrayList<Integer> listePoids = new ArrayList<>();
+            ArrayList<Double> listePoids = new ArrayList<>();
             int iPoids = 0; 
             while (rset.next()){
                 iPoids++;
-                int poids = rset.getInt(1);
+                double poids = rset.getDouble(1);
                 System.out.println(iPoids + ". " + poids);
             }
             rset.close();
@@ -464,14 +464,14 @@ public class StatementCommande{
             e.printStackTrace(System.err);
       }
     }
-    public void ajouteCommandeP(int[] argsCommandeP,String ModeConditionnement,double[] argsDouble,String date){
+    public void ajouteCommandeP(int[] argsCommandeP,String ModeConditionnement,double[] argsDouble,String date,double PoidsUnitaire){
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVLIGNEP);
         for (int i = 0; i<3;i++){
             stmt.setInt(i+1,argsCommandeP[i]);
         }
         stmt.setString(4,ModeConditionnement);
-        stmt.setInt(5,argsCommandeP[3]);
+        stmt.setDouble(5,PoidsUnitaire);
         stmt.setString(6,date);
         stmt.setDouble(7, argsDouble[0]);
         stmt.setDouble(8, argsDouble[1]);
@@ -500,23 +500,23 @@ public class StatementCommande{
             e.printStackTrace(System.err);
       }
     }
-    public double ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP){
+    public double ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTP);
         stmt.setInt(1,argsCommandeP[2]);
         stmt.setString(2, ModeConditionnement);
-        stmt.setInt(3,argsCommandeP[3]);
+        stmt.setDouble(3,PoidsUnitaire);
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
         while(quantiteP > 0){
             rset.next();
-            double qtedispo = rset.getDouble(4);
+            double qtedispo = rset.getDouble(3);
             double prix = rset.getDouble(1);
             String date = rset.getString(2);
             double quantite = Math.min(quantiteP,qtedispo);
             double sousTotal = quantite*prix;
             double[] argsDouble = {quantite,prix,sousTotal};
-            ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, date);
+            ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, date,PoidsUnitaire);
             prixTotal += sousTotal;
             quantiteP -= qtedispo;
         }
