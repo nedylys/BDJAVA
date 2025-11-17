@@ -314,7 +314,6 @@ CREATE TABLE ProduitCommande(
 
 ALTER TABLE LotProduit
 MODIFY (PoidsUnitaire FLOAT);
-
 CREATE TRIGGER Verif_Suppression_Client
 -- Trigger pour vérifier si un client a des commandes avant suppression
 BEFORE DELETE ON Client -- avant la suppression d'un client (une ligne de la table Client)
