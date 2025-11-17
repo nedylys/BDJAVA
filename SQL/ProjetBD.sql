@@ -21,8 +21,14 @@ CREATE TABLE Producteur (
 
 CREATE TABLE Activite(
     TypeActivite VARCHAR2(30) PRIMARY KEY
-        CHECK (TypeActivite IN ('Agriculteur', 'eleveur', 'Fromager'))
+        CHECK (TypeActivite IN ('Agriculteur', 'Eleveur', 'Fromager'))
 );
+
+SELECT constraint_name
+FROM user_constraints
+WHERE table_name = 'Activite' 
+  AND constraint_type = 'C';
+
 
 CREATE TABLE ProducteurAPourActivite(
     idProducteur INT,
@@ -44,11 +50,12 @@ CREATE TABLE Produit(
     CategorieProduit VARCHAR2(30)
          CHECK (CategorieProduit IN ('Fromage', 'boisson', 'cereales', 'legumineuse', 'fruits secs', 'huile')),
     DescriptionProduit VARCHAR2(255),
-    StockProduit INT CHECK (StockProduit >= 0),
+    StockProduit FLOAT CHECK (StockProduit >= 0),
     idProducteur INT,
     CONSTRAINT fk_produit_producteur
         FOREIGN KEY (idProducteur) 
         REFERENCES Producteur(idProducteur)
+        
         ON DELETE CASCADE
 );
 
@@ -135,7 +142,7 @@ CREATE TABLE Contenant(
     TypeContenant VARCHAR2(30)
         CHECK (TypeContenant IN ('bocal en verre', 'sachet kraft', 'sachet tissu', 'papier cire', 'autre')),
     CapaciteContenant INT CHECK (CapaciteContenant >= 0),
-    StockDisponible INT CHECK (StockDisponible >= 0),
+    StockDisponible FLOAT CHECK (StockDisponible >= 0),
     ReutilisableContenant INT CHECK (ReutilisableContenant IN (0,1))
 );
 
@@ -156,11 +163,11 @@ CREATE TABLE LotProduit(
         CHECK (ModeConditionnement IN ('vrac', 'preconditionne')),
     PoidsUnitaire INT,
     DateReceptionP DATE,
-    QuantiteDisponibleP INT CHECK (QuantiteDisponibleP >= 0),
+    QuantiteDisponibleP FLOAT CHECK (QuantiteDisponibleP >= 0),
     DatePeremptionType VARCHAR2(30) CHECK (DatePeremptionType IN ('DLC', 'DLUO')),
     DatePeremption DATE,
-    PrixVentePTTC INT CHECK (PrixVentePTTC >= 0),
-    PrixAchatProducteur INT CHECK (PrixAchatProducteur >= 0),
+    PrixVentePTTC FLOAT CHECK (PrixVentePTTC >= 0),
+    PrixAchatProducteur FLOAT CHECK (PrixAchatProducteur >= 0),
     idProduit INT,
     PRIMARY KEY (DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire),
     CONSTRAINT fk_lot_produit 
@@ -177,9 +184,9 @@ CREATE TABLE LigneCommandeProduit(
     ModeConditionnement VARCHAR2(30),
     PoidsUnitaire INT,
     DateReceptionP DATE,
-    QuantiteCommandeeP INT CHECK (QuantiteCommandeeP > 0),
-    PrixUnitaireP INT CHECK (PrixUnitaireP > 0),
-    SousTotalLigneP INT CHECK (SousTotalLigneP > 0),
+    QuantiteCommandeeP FLOAT CHECK (QuantiteCommandeeP > 0),
+    PrixUnitaireP FLOAT CHECK (PrixUnitaireP > 0),
+    SousTotalLigneP FLOAT CHECK (SousTotalLigneP > 0),
     PRIMARY KEY (numLigneP, idCommande),
     CONSTRAINT fk_ligne_commande_produit_commande
         FOREIGN KEY (idCommande) 
@@ -190,6 +197,9 @@ CREATE TABLE LigneCommandeProduit(
         REFERENCES LotProduit(DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire)
         ON DELETE CASCADE
 );
+ALTER TABLE LotProduit MODIFY (PoidsUnitaire Float);
+
+ALTER TABLE LigneCommandeProduit MODIFY (PoidsUnitaire Float);
 
 CREATE TABLE LigneCommandeContenant(
     numLigneC INT,
@@ -197,8 +207,8 @@ CREATE TABLE LigneCommandeContenant(
     idContenant INT,
     DateReceptionC DATE,
     QuantiteCommandeeC INT CHECK (QuantiteCommandeeC > 0),
-    PrixUnitaireC INT CHECK (PrixUnitaireC > 0),
-    SousTotalLigneC INT CHECK (SousTotalLigneC > 0),
+    PrixUnitaireC FLOAT CHECK (PrixUnitaireC > 0),
+    SousTotalLigneC FLOAT CHECK (SousTotalLigneC > 0),
     PRIMARY KEY (numLigneC, idCommande),
     CONSTRAINT fk_ligne_commande_contenant_commande
         FOREIGN KEY (idCommande) 
@@ -212,8 +222,8 @@ CREATE TABLE LigneCommandeContenant(
 
 CREATE TABLE CommandeaLivrer(
     idCommande INT PRIMARY KEY,
-    StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En preparation', 'Prête', 'En livraison', 'Livree', 'Annulee')),
-    FraisLivraison INT CHECK (FraisLivraison >= 0),
+    StatutCommandeL VARCHAR2(30) CHECK (StatutCommandeL IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee')),
+    FraisLivraison FLOAT CHECK (FraisLivraison >= 0),
     DateLivraisonEstimee DATE,
     AdresseLivraison VARCHAR2(255),
     CONSTRAINT fk_commande_livrer_commande
@@ -225,15 +235,39 @@ CREATE TABLE CommandeaLivrer(
         REFERENCES AdresseLivraison(AdresseLivraison)
         ON DELETE CASCADE
 );
+ALTER TABLE CommandeaLivrer
+DROP CONSTRAINT SYS_C001323420;
+
+ALTER TABLE CommandeaLivrer
+ADD CONSTRAINT ck_statut_commande_l
+CHECK (StatutCommandeL IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee'));
+
 
 CREATE TABLE CommandeenBoutique(
     idCommande INT PRIMARY KEY,
-    StatutCommandeB VARCHAR2(30) CHECK (StatutCommandeB IN ('En preparation', 'Prête', 'En livraison', 'Recuperee', 'Annulee')),
+    StatutCommandeB VARCHAR2(30) CHECK (StatutCommandeB IN ('En preparation', 'Prete', 'En livraison', 'Recuperee', 'Annulee')),
     CONSTRAINT fk_commande_boutique_commande
         FOREIGN KEY (idCommande) 
         REFERENCES Commande(idCommande)
         ON DELETE CASCADE
 );
+
+ALTER TABLE CommandeenBoutique
+DROP CONSTRAINT SYS_C001323405;
+
+ALTER TABLE CommandeenBoutique
+DROP CONSTRAINT SYS_C001323404;
+
+
+ALTER TABLE CommandeenBoutique
+ADD CONSTRAINT ck_statut_commande_b
+CHECK (StatutCommandeB IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee'));
+
+SELECT StatutCommandeB FROM CommandeenBoutique;
+UPDATE CommandeenBoutique
+SET StatutCommandeB = 'Prete'
+WHERE StatutCommandeB = 'Prête';
+
 
 CREATE TABLE PerteProduit(
     idPerteP INT,
