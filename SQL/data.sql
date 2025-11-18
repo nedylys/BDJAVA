@@ -177,4 +177,3 @@ INSERT INTO PerteProduit VALUES (2, 6, TO_DATE('2025-10-25','YYYY-MM-DD'), 1, 'c
 INSERT INTO PerteContenant VALUES (2, 4, TO_DATE('2025-10-26','YYYY-MM-DD'), 5, 'vol');
 
 COMMIT;
-

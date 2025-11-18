@@ -161,7 +161,7 @@ CREATE TABLE LotContenant(
 CREATE TABLE LotProduit(
     ModeConditionnement VARCHAR2(30) 
         CHECK (ModeConditionnement IN ('vrac', 'preconditionne')),
-    PoidsUnitaire INT,
+    PoidsUnitaire FLOAT,
     DateReceptionP DATE,
     QuantiteDisponibleP FLOAT CHECK (QuantiteDisponibleP >= 0),
     DatePeremptionType VARCHAR2(30) CHECK (DatePeremptionType IN ('DLC', 'DLUO')),
@@ -182,7 +182,7 @@ CREATE TABLE LigneCommandeProduit(
     idCommande INT,
     idProduit INT,
     ModeConditionnement VARCHAR2(30),
-    PoidsUnitaire INT,
+    PoidsUnitaire Float,
     DateReceptionP DATE,
     QuantiteCommandeeP FLOAT CHECK (QuantiteCommandeeP > 0),
     PrixUnitaireP FLOAT CHECK (PrixUnitaireP > 0),
@@ -197,6 +197,7 @@ CREATE TABLE LigneCommandeProduit(
         REFERENCES LotProduit(DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire)
         ON DELETE CASCADE
 );
+
 ALTER TABLE LotProduit MODIFY (PoidsUnitaire Float);
 
 ALTER TABLE LigneCommandeProduit MODIFY (PoidsUnitaire Float);
@@ -312,14 +313,8 @@ CREATE TABLE ProduitCommande(
         ON DELETE CASCADE
 );
 
-ALTER TABLE LotProduit
-MODIFY (PoidsUnitaire FLOAT);
-<<<<<<< HEAD
-=======
 
-
->>>>>>> 7c521a2c492fb21d43c00a2fe028340649d7a832
-CREATE TRIGGER Verif_Suppression_Client
+CREATE OR REPLACE TRIGGER Verif_Suppression_Client
 -- Trigger pour vérifier si un client a des commandes avant suppression
 BEFORE DELETE ON Client -- avant la suppression d'un client (une ligne de la table Client)
 FOR EACH ROW
@@ -338,142 +333,147 @@ BEGIN
 END;
 /
 
-ALTER TABLE LOTPRODUIT
-MODIFY (POIDSUNITAIRE NUMBER(10,2));
 
-CREATE TRIGGER Verif_sous_total_ligneP
--- Trigger pour vérifier que le sous-total d'une ligne de commande produit est correct
+CREATE OR REPLACE TRIGGER Verif_sous_total_ligneP
 BEFORE INSERT OR UPDATE ON LigneCommandeProduit
 FOR EACH ROW
 BEGIN
-    IF NEW.SousTotalLigneP <> NEW.QuantiteCommandeeP * NEW.PrixUnitaireP THEN
+    IF :NEW.SousTotalLigneP <> :NEW.QuantiteCommandeeP * :NEW.PrixUnitaireP THEN
         RAISE_APPLICATION_ERROR(-32, 'Le sous-total de la ligne de commande produit est incorrect.');
     END IF;
 END;
 /
 
-CREATE TRIGGER Verif_sous_total_ligneC
--- Trigger pour vérifier que le sous-total d'une ligne de commande contenant est correct
+CREATE OR REPLACE TRIGGER Verif_sous_total_ligneC
 BEFORE INSERT OR UPDATE ON LigneCommandeContenant
 FOR EACH ROW
 BEGIN
-    IF NEW.SousTotalLigneC <> NEW.QuantiteCommandeeC * NEW.PrixUnitaireC THEN
+    IF :NEW.SousTotalLigneC <> :NEW.QuantiteCommandeeC * :NEW.PrixUnitaireC THEN
         RAISE_APPLICATION_ERROR(-32, 'Le sous-total de la ligne de commande contenant est incorrect.');
     END IF;
 END;
 /
 
+
 CREATE OR REPLACE TRIGGER verif_statut_commande
-BEFORE UPDATE ON CommandeaLLivrer
+BEFORE UPDATE ON CommandeaLivrer
 FOR EACH ROW
 BEGIN
-    IF :OLD.StatutCommande IN ('Livrée', 'Annulée')
-       AND :NEW.StatutCommande NOT IN ('Livrée', 'Annulée') THEN
-        RAISE_APPLICATION_ERROR(-20005, 'Statut invalide : une commande livrée ou annulée ne peut pas être réouverte');
+    IF :OLD.StatutCommandeL IN ('Livree', 'Annulee')
+       AND :NEW.StatutCommandeL NOT IN ('Livree', 'Annulee') THEN
+        RAISE_APPLICATION_ERROR(-33, 'Statut invalide : une commande livree ou annulee ne peut pas être réouverte.');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER Verif_commandeP_stock
+BEFORE INSERT OR UPDATE ON LigneCommandeProduit
+FOR EACH ROW
+DECLARE
+    stock_disponible FLOAT;
+BEGIN
+    SELECT StockProduit INTO stock_disponible
+    FROM Produit WHERE idProduit = :NEW.idProduit;
+
+    IF :NEW.QuantiteCommandeeP > stock_disponible THEN
+        RAISE_APPLICATION_ERROR(-34, 'Quantité commandée pour ce produit > stock disponible');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER Verif_commandeC_stock
+BEFORE INSERT OR UPDATE ON LigneCommandeContenant
+FOR EACH ROW
+DECLARE
+    stock_disponible FLOAT;
+BEGIN
+    SELECT StockDisponible INTO stock_disponible
+    FROM Contenant WHERE idContenant = :NEW.idContenant;
+
+    IF :NEW.QuantiteCommandeeC > stock_disponible THEN
+        RAISE_APPLICATION_ERROR(-35, 'Quantité commandée pour ce contenant > stock disponible');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER Verif_perte_produit_stock
+BEFORE INSERT OR UPDATE ON PerteProduit
+FOR EACH ROW
+DECLARE
+    stock_dispo INT;
+BEGIN
+    SELECT StockProduit INTO stock_dispo
+    FROM Produit WHERE idProduit = :NEW.idProduit;
+
+    IF :NEW.QuantitePerdueP > stock_dispo THEN
+        RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce produit > stock disponible');
     END IF;
 END;
 /
 
 
-CREATE TRIGGER Verif_commandeP_stock
--- Trigger pour vérifier que la quantité commandée d'un produit ne dépasse pas le stock disponible
-BEFORE INSERT OR UPDATE ON LigneCommandeProduit
+CREATE OR REPLACE TRIGGER Verif_perte_contenant_stock
+BEFORE INSERT OR UPDATE ON PerteContenant
 FOR EACH ROW
+DECLARE
+    stock_dispo INT;
 BEGIN
-    DECLARE
-        stock_disponible FLOAT;
-        BEGIN
-            SELECT StockDisponible INTO stock_disponible FROM Produit WHERE idProduit = New.idProduit;
-            IF  :NEW.QuantiteCommandeeP > stock_disponible THEN
-                RAISE_APPLICATION_ERROR(-34, 'Quantité commandée pour ce produit > stock disponible')
+    SELECT StockDisponible INTO stock_dispo
+    FROM Contenant WHERE idContenant = :NEW.idContenant;
 
-
-CREATE TRIGGER Verif_commandeC_stock
--- Trigger pour vérifier que la quantité commandée d'un contenant ne dépasse pas le stock disponible
-BEFORE INSERT OR UPDATE ON LigneCommandeContenant
-FOR EACH ROW
-BEGIN
-    DECLARE
-        stock_disponible FLOAT;
-        BEGIN
-            SELECT StockDisponible INTO stock_disponible FROM Produit WHERE idContenant = New.idContenant;
-            IF  :NEW.QuantiteCommandeeC > stock_disponible THEN
-                RAISE_APPLICATION_ERROR(-35, 'Quantité commandée pour ce contenant > stock disponible')
-
-
-CREATE TRIGGER Verif_perte_produit_stock
--- Trigger pour vérifier que la quantité perdue d'un produit ne dépasse pas le stock disponible
-BEFORE INSERT OR UPDATE ON PerteProduit
-FOR EACH ROW
-BEGIN
-    DECLARE
-        quantite_perdueP INT;
-        BEGIN
-            SELECT StockProduit INTO quantite_perdueP FROM Produit WHERE idProduit = New.idProduit;
-            IF  :NEW.QuantitePerdueP > quantite_perdueP THEN
-                RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce produit > stock disponible')
+    IF :NEW.QuantitePerdueC > stock_dispo THEN
+        RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce contenant > stock disponible');
+    END IF;
 END;
 /
 
-CREATE TRIGGER Verif_perte_contenant_stock
--- Trigger pour vérifier que la quantité perdue d'un produit ne dépasse pas le stock disponible
-BEFORE INSERT OR UPDATE ON PerteProduit
-FOR EACH ROW
-BEGIN
-    DECLARE
-        quantite_perdueC INT;
-        BEGIN
-            SELECT StockContenant INTO quantite_perdueC FROM Contenant WHERE idContenant = New.idContenant;
-            IF  :NEW.QuantitePerdueC > quantite_perdueC THEN
-                RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce contenant > stock disponible')
-END;
-/
 
-CREATE TRIGGER verif_stock_produit
+CREATE OR REPLACE TRIGGER verif_stock_produit
 BEFORE INSERT OR UPDATE ON LotProduit
 FOR EACH ROW
 DECLARE
     total_stock FLOAT;
+    stock_produit FLOAT;
 BEGIN
-    SELECT SUM(QuantiteDisponibleP) INTO total_stock FROM LotProduit WHERE idProduit = :NEW.idProduit AND (DateReceptionP != :OLD.DateReceptionP OR :OLD.DateReceptionP IS NULL);
-    IF total_stock IS NULL THEN
-        total_stock := :NEW.QuantiteDisponibleP;
-    ELSE
-        total_stock := total_stock + :NEW.QuantiteDisponibleP;
-    END IF;
-    DECLARE
-        stock_produit FLOAT;
-    BEGIN
-        SELECT StockProduit INTO stock_produit FROM Produit WHERE idProduit = :NEW.idProduit;
+    SELECT NVL(SUM(QuantiteDisponibleP), 0)
+    INTO total_stock
+    FROM LotProduit
+    WHERE idProduit = :NEW.idProduit
+      AND (DateReceptionP != :OLD.DateReceptionP OR :OLD.DateReceptionP IS NULL);
 
-        IF total_stock != stock_produit THEN
-            RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du produit.');
-        END IF;
-    END;
+    total_stock := total_stock + :NEW.QuantiteDisponibleP;
+
+    SELECT StockProduit INTO stock_produit
+    FROM Produit WHERE idProduit = :NEW.idProduit;
+
+    IF total_stock != stock_produit THEN
+        RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du produit.');
+    END IF;
 END;
 /
 
-CREATE TRIGGER verif_stock_contenant
+
+CREATE OR REPLACE TRIGGER verif_stock_contenant
 BEFORE INSERT OR UPDATE ON LotContenant
 FOR EACH ROW
 DECLARE
     total_stock FLOAT;
+    stock_contenant FLOAT;
 BEGIN
-    SELECT SUM(QuantiteDisponibleC) INTO total_stock FROM LotContenant WHERE idContenant = :NEW.idContenant
+    SELECT NVL(SUM(QuantiteDisponibleC), 0)
+    INTO total_stock
+    FROM LotContenant
+    WHERE idContenant = :NEW.idContenant
       AND (DateReceptionC != :OLD.DateReceptionC OR :OLD.DateReceptionC IS NULL);
-    IF total_stock IS NULL THEN
-        total_stock := :NEW.QuantiteDisponibleC;
-    ELSE
-        total_stock := total_stock + :NEW.QuantiteDisponibleC;
-    END IF;
-    DECLARE
-        stock_contenant FLOAT;
-    BEGIN
-        SELECT StockDisponible INTO stock_contenant FROM Contenant WHERE idContenant = :NEW.idContenant;
 
-        IF total_stock != stock_contenant THEN
-            RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du contenant.');
-        END IF;
-    END;
+    total_stock := total_stock + :NEW.QuantiteDisponibleC;
+
+    SELECT StockDisponible INTO stock_contenant
+    FROM Contenant WHERE idContenant = :NEW.idContenant;
+
+    IF total_stock != stock_contenant THEN
+        RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du contenant.');
+    END IF;
 END;
 /
+commit;
