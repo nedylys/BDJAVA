@@ -11,7 +11,7 @@ public class StatementCommande{
     
     static final String STDispo = "select idProduit from ProduitCommande where idProduit = ? ";
     
-    static final String STSaison = "select DateDébut,DateFin from ProduitAPourSaison where idProduit = ?";
+    static final String STSaison = "select DateDebut,DateFin from ProduitAPourSaison where idProduit = ?";
     
     static final String STVerifieIDProduit = "select idProduit from Produit where idProduit = ?"; 
 
@@ -51,10 +51,11 @@ public class StatementCommande{
 
     static final String STNVLIGNEC = " INSERT INTO LigneCommandeContenant VALUES(?,?,?,TO_DATE(?, 'YYYY-MM-DD'),?,?,?) ";
 
-    static final String STCARACTP = "SELECT PrixVentePTTC,DateReceptionP,QuantiteDisponibleP FROM LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
+    static final String STCARACTP = "SELECT PrixVentePTTC,DateReceptionP,QuantiteDisponibleP FROM LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? and DatePeremption >= TO_DATE(?, 'YYYY-MM-DD') ORDER BY DatePeremption ASC";
 
     static final String STCARACTC = "SELECT DateReceptionC,QuantiteDisponibleC,PrixVenteCTTC FROM LotContenant where idContenant = ?";
     
+    static final String STMODECONDITIONNEMENT = "SELECT DISTINCT ModeConditionnement from LotProduit where idProduit = ?";
     
     //static private String DATESQL = "TO_DATE(?, 'YYYY-MM-DD')";
 
@@ -104,7 +105,22 @@ public class StatementCommande{
             return 0;
       }
     }
-    
+    public void getModeConditionnement(int idProduit){
+        try{
+            PreparedStatement stmt = conn.prepareStatement(STMODECONDITIONNEMENT);
+            stmt.setInt(1, idProduit);
+            ResultSet rset = stmt.executeQuery();
+            while (rset.next()){
+                String ModeConditonnement = rset.getString(1);
+                System.out.println(ModeConditonnement);
+            }
+            rset.close();
+            stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
     public boolean getDispo(int idProduit,double quantite,String ModeConditionnement,double poidsUnitaire){
     // Verfie si le produit en stock peut être obtenu
     try{
@@ -183,12 +199,10 @@ public class StatementCommande{
             stmt.setInt(1, idProduit);
             ResultSet rset = stmt.executeQuery();
             if (rset.next()){
-                System.out.println("Produit sur Commande ");
                 rset.close();
                 stmt.close();
                 return true;
             }else{
-                System.out.println("Produit en Stock ");
                 rset.close();
                 stmt.close();
                 return false;
@@ -506,10 +520,15 @@ public class StatementCommande{
         stmt.setInt(1,argsCommandeP[2]);
         stmt.setString(2, ModeConditionnement);
         stmt.setDouble(3,PoidsUnitaire);
+        java.util.Date now = new java.util.Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dateparam = sdf.format(now);
+        stmt.setString(4, dateparam);
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
         while(quantiteP > 0){
             rset.next();
+            argsCommandeP[0]++;
             double qtedispo = rset.getDouble(3);
             double prix = rset.getDouble(1);
             String date = rset.getString(2);
@@ -537,6 +556,7 @@ public class StatementCommande{
         double prixTotal = 0;
         while(quantiteC > 0){
             rset.next();
+            argsCommandeC[0]++;
             int qtedispo = rset.getInt(2);
             double prix = rset.getDouble(3);
             String date = rset.getString(1);

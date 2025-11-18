@@ -48,11 +48,12 @@ public class PassCommande{
         if (!(statementcomm.verifieIdProduit(idProduit))){
             commandeProduit();
         }
-        System.out.println("Chosissez le Mode de Conditionnement : vrac ou preconditionne ");
+        System.err.println("Modes de Conditionnement disponibles : ");
+        statementcomm.getModeConditionnement(idProduit);
         System.out.println("Entrer le Mode de Conditionnement : ");
         String ModeConditionnement = scan.nextLine();
         double PoidsUnitaire;
-        while (!(ModeConditionnement.equals("vrac")) || !(ModeConditionnement.equals("preconditionne"))){
+        while (!(ModeConditionnement.equals("vrac")) && !(ModeConditionnement.equals("preconditionne"))){
             System.out.println("Mauvaise saisie ");
             System.out.println("Entrer le Mode de Conditionnement : ");
             ModeConditionnement = scan.nextLine();
@@ -60,12 +61,13 @@ public class PassCommande{
         if (ModeConditionnement.equals("vrac")){
             PoidsUnitaire = 1.0;
         }else{
+            System.out.println("Les poidsUnitaire disponibles : ");
             statementcomm.choisirPoidsUnitaire(idProduit);
             System.out.println("Entrer le poids unitaire : ");
-            PoidsUnitaire = scan.nextInt();
+            PoidsUnitaire = scan.nextDouble();
             scan.nextLine();
         }
-        System.out.println(" Entrer la quantité souhaitée : ");
+        System.out.println("Entrer la quantité souhaitée : ");
         double qte = scan.nextDouble();
         scan.nextLine();
         boolean commande = statementcomm.inCommande(idProduit);
@@ -74,9 +76,16 @@ public class PassCommande{
             int delai = statementcomm.getDelaiDispo(idProduit);
             System.out.println("Votre produit sera disponible dans " + delai);
         }else{
+            System.out.println("Votre produit est en stock ");
             boolean dispo = statementcomm.getDispo(idProduit, qte, ModeConditionnement, PoidsUnitaire);
             if (!dispo){
-                commandeProduit();
+                System.out.println(" 1 : Recommander un Produit ");
+                System.out.println(" 2 : Commander un Contenant");
+                System.out.println(" 3 : Annuler la commande ");
+                System.out.println(" 4 : Finaliser la commande ");
+                System.out.println(" 5 : Retour au menu prinicpal");
+                System.out.println("Taper le numéro choisi:");
+                beginCommande();
             }
         }
         System.out.println("Voulez vous commander le produit ?");
@@ -84,19 +93,18 @@ public class PassCommande{
         boolean creecommande = scan.nextBoolean(); 
         scan.nextLine();
         if (creecommande){
-            int numligneP = statementcomm.nbLigneP();
+            int numligneP = 0;
             int[] argsCommande = {numligneP,idCommande,idProduit};
             double prix = statementcomm.ajouteCommandeGlobalP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
             System.out.println("Cette commande de ce produit vous couteta " + prix); 
-        }else{
-            System.out.println(" 1 : Recommander un Produit ");
-            System.out.println(" 2 : Commander un Contenant");
-            System.out.println(" 3 : Annuler la commande ");
-            System.out.println(" 4 : Finaliser la commande ");
-            System.out.println(" 5 : Retour au menu prinicpal");
-            System.out.println("Taper le numéro choisi:");
-            beginCommande();
         }
+        System.out.println(" 1 : Recommander un Produit ");
+        System.out.println(" 2 : Commander un Contenant");
+        System.out.println(" 3 : Annuler la commande ");
+        System.out.println(" 4 : Finaliser la commande ");
+        System.out.println(" 5 : Retour au menu prinicpal");
+        System.out.println("Taper le numéro choisi:");
+        beginCommande();
     }
     public void commandeContenant(){
         System.out.println(" Entrer l'idContenant : ");
@@ -118,12 +126,12 @@ public class PassCommande{
         boolean creecommande = scan.nextBoolean(); 
         scan.nextLine();
         if (creecommande){
-            int numligneC = statementcomm.nbLigneContenant();
+            int numligneC = 0;
             int[] argsCommandeC = {numligneC,idCommande,idContenant};
             double prix = statementcomm.ajouteCommandeGlobalC(argsCommandeC, qte);
             System.out.println("Cette commande de ce contenat vous couteta " + prix); 
         } else{
-            System.out.println(" 1 : Commander un Produit ");
+            System.out.println("1 : Commander un Produit ");
             System.out.println(" 2 : Recommander un Contenant");
             System.out.println(" 3 : Annuler la commande ");
             System.out.println(" 4 : Finaliser la commande ");
