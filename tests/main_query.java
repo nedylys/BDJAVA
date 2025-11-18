@@ -1,3 +1,7 @@
+package tests;
+
+
+import main.*;
 
 import java.io.Console;
 import java.sql.*;
@@ -8,8 +12,7 @@ public class main_query {
     public static void main(String args[]){
         ConnectionBase connB = new ConnectionBase();
         Connection conn = connB.beginConnection();
-
-
+         
         if (conn != null) {
             MenuPrincipal menu = new MenuPrincipal(conn);
             menu.afficherMenu();

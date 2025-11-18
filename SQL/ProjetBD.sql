@@ -314,6 +314,11 @@ CREATE TABLE ProduitCommande(
 
 ALTER TABLE LotProduit
 MODIFY (PoidsUnitaire FLOAT);
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 7c521a2c492fb21d43c00a2fe028340649d7a832
 CREATE TRIGGER Verif_Suppression_Client
 -- Trigger pour vérifier si un client a des commandes avant suppression
 BEFORE DELETE ON Client -- avant la suppression d'un client (une ligne de la table Client)
@@ -333,6 +338,8 @@ BEGIN
 END;
 /
 
+ALTER TABLE LOTPRODUIT
+MODIFY (POIDSUNITAIRE NUMBER(10,2));
 
 CREATE TRIGGER Verif_sous_total_ligneP
 -- Trigger pour vérifier que le sous-total d'une ligne de commande produit est correct
@@ -419,5 +426,54 @@ BEGIN
             SELECT StockContenant INTO quantite_perdueC FROM Contenant WHERE idContenant = New.idContenant;
             IF  :NEW.QuantitePerdueC > quantite_perdueC THEN
                 RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce contenant > stock disponible')
+END;
+/
+
+CREATE TRIGGER verif_stock_produit
+BEFORE INSERT OR UPDATE ON LotProduit
+FOR EACH ROW
+DECLARE
+    total_stock FLOAT;
+BEGIN
+    SELECT SUM(QuantiteDisponibleP) INTO total_stock FROM LotProduit WHERE idProduit = :NEW.idProduit AND (DateReceptionP != :OLD.DateReceptionP OR :OLD.DateReceptionP IS NULL);
+    IF total_stock IS NULL THEN
+        total_stock := :NEW.QuantiteDisponibleP;
+    ELSE
+        total_stock := total_stock + :NEW.QuantiteDisponibleP;
+    END IF;
+    DECLARE
+        stock_produit FLOAT;
+    BEGIN
+        SELECT StockProduit INTO stock_produit FROM Produit WHERE idProduit = :NEW.idProduit;
+
+        IF total_stock != stock_produit THEN
+            RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du produit.');
+        END IF;
+    END;
+END;
+/
+
+CREATE TRIGGER verif_stock_contenant
+BEFORE INSERT OR UPDATE ON LotContenant
+FOR EACH ROW
+DECLARE
+    total_stock FLOAT;
+BEGIN
+    SELECT SUM(QuantiteDisponibleC) INTO total_stock FROM LotContenant WHERE idContenant = :NEW.idContenant
+      AND (DateReceptionC != :OLD.DateReceptionC OR :OLD.DateReceptionC IS NULL);
+    IF total_stock IS NULL THEN
+        total_stock := :NEW.QuantiteDisponibleC;
+    ELSE
+        total_stock := total_stock + :NEW.QuantiteDisponibleC;
+    END IF;
+    DECLARE
+        stock_contenant FLOAT;
+    BEGIN
+        SELECT StockDisponible INTO stock_contenant FROM Contenant WHERE idContenant = :NEW.idContenant;
+
+        IF total_stock != stock_contenant THEN
+            RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du contenant.');
+        END IF;
+    END;
 END;
 /

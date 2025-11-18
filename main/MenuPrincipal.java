@@ -1,8 +1,12 @@
-import java.util.Scanner;
+package main;
+
 import java.sql.*;
+import java.util.Scanner;
+
 
 public class MenuPrincipal {
-    Connection connection;
+    private Connection connection;
+
     public MenuPrincipal(Connection conn){
         this.connection = conn;
     }
@@ -12,6 +16,7 @@ public class MenuPrincipal {
             int choix = 0;
     
             try {
+                connection.setAutoCommit(false);
                 System.out.println("\n========================================================");
                 System.out.println("                      ☰ MAIN MENU                       ");
                 System.out.println("========================================================");
@@ -108,7 +113,7 @@ public class MenuPrincipal {
             }
             System.out.println("\n ==================================== Espace commande à passer ====================================");
 
-            PassCommande commande = new PassCommande(connection,scanner);
+            PassCommande commande = new PassCommande(connection,scanner,this);
             commande.beginCommande();
         }
     
