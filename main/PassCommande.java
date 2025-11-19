@@ -10,12 +10,14 @@ public class PassCommande{
     private MenuPrincipal menu;
     private Scanner scan;
     private int idCommande;
+    private double prixCommande;
     
     public PassCommande(Connection conn,Scanner scan,MenuPrincipal menu){
         this.conn = conn;
         this.scan = scan;
         this.statementcomm = new StatementCommande(conn);
         this.menu = menu;
+        prixCommande = 0;
         idCommande = statementcomm.nbIdCommade();
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
@@ -129,6 +131,7 @@ public class PassCommande{
             int numligneC = 0;
             int[] argsCommandeC = {numligneC,idCommande,idContenant};
             double prix = statementcomm.ajouteCommandeGlobalC(argsCommandeC, qte);
+            this.prixCommande += prix;
             System.out.println("Cette commande de ce contenat vous couteta " + prix); 
         } else{
             System.out.println("1 : Commander un Produit ");
@@ -200,7 +203,7 @@ public class PassCommande{
                 scan.nextLine();
                 adresse = adresseArray.get(numchoisi - 1);
             }
-            System.out.println("Entrer les frais de livraison  : ");
+            System.out.println("Entrer les frais de livraison éventuels : ");
             double fraisLivraison = scan.nextDouble();
             scan.nextLine();
             System.out.println("Entrer la date de livraison  : ");
@@ -214,6 +217,7 @@ public class PassCommande{
         }
         String [] argsCommande = {ModePaiement,ModeRecuperation};
         statementcomm.creeCommande(idCommande, idClient, argsCommande);
+        System.err.println("La commande globale vous coutera " + this.prixCommande);
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");

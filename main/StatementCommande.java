@@ -368,15 +368,17 @@ public class StatementCommande{
     public void ajouteNovClient(String[] argsClient,int idClient){
     try{
         PreparedStatement stmt = conn.prepareStatement(STNvClient);
-        for (int i = 0; i<5;i++){
+        for (int i = 0; i<4;i++){
             stmt.setString(i+1,argsClient[i]);
         }
         stmt.setInt(5,idClient);
         int nbAjout = stmt.executeUpdate();
-        if (nbAjout == 1){
+        if (nbAjout == 2){
             System.out.println("Le client a bien été ajouté dans la base de données");
-        }else{
-            System.out.println("Echec de l'ajout du nouveau client");
+        }else if (nbAjout == 1){
+            System.out.println("La creation de ClientAnonyme a echoué");
+        } else{
+            System.out.println("Echec de l'opération le client n'a pas été ajouté ");
         }
         stmt.close();
       }catch (SQLException e) {
