@@ -534,6 +534,7 @@ public class StatementCommande{
             double qtedispo = rset.getDouble(3);
             double prix = rset.getDouble(1);
             String date = rset.getString(2);
+            System.out.println(date);
             double quantite = Math.min(quantiteP,qtedispo);
             double sousTotal = quantite*prix;
             double[] argsDouble = {quantite,prix,sousTotal};
