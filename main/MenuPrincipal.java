@@ -1,6 +1,9 @@
 package main;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 
@@ -61,7 +64,7 @@ public class MenuPrincipal {
                 System.out.println("[!] Impossible de clear le terminal");
             }
             try {
-                System.out.println("\n=============================================== Catalogue des produits ===============================================");
+                System.out.println("\n============================================ 📝🛒 Catalogue des produits ========================================");
                 System.out.println("\n");
 
                 // Creation de la requete
@@ -138,7 +141,7 @@ public class MenuPrincipal {
             
             
             try {
-                System.out.println("\n==================================== 🚨 Alertes de péremption ====================================\n");
+                System.out.println("\n===========================================================  🚨 Alertes de péremption ================================================================\n");
                 // Creation de la requete
                 PreparedStatement stmt = connection.prepareStatement(Statement.ALERTES_PRE);
                 // Execution de la requete
@@ -151,6 +154,15 @@ public class MenuPrincipal {
                     System.out.println("");
                     System.out.println("Aucune alerte de péremption pour le moment. 🤗");
                     System.out.println("");
+                }
+                else{
+                    PreparedStatement stmtp = connection.prepareStatement(Statement.Price_reduce);
+                    int updated = stmtp.executeUpdate();   
+                    if (updated > 0) {
+                        System.out.println("💸 Réduction appliquée sur " + updated + " lot(s).");
+                    } else {
+                        System.out.println("Aucune réduction appliquée.");
+                    }
                 }
                 
                 System.out.println(" 0 : Retour au menu principal");
@@ -178,7 +190,6 @@ public class MenuPrincipal {
                             consulterAlertes(scanner, choix);
                         }
                     }
-                    scanner.close();
             }
             
 
@@ -327,35 +338,48 @@ public class MenuPrincipal {
         private boolean dumpResultSet(ResultSet rset) throws SQLException {
             ResultSetMetaData rsetmd = rset.getMetaData();
             int columnCount = rsetmd.getColumnCount();
-
-            int[] widths = {12, 15, 18, 20, 15, 15, 15};
-            
+            int padding = 2; // espace entre les colonnes
+        
+            // Calculer la largeur maximale pour chaque colonne
+            int[] widths = new int[columnCount];
+            List<String[]> rows = new ArrayList<>();
+            boolean hasResults = false;
+        
+            // Parcourir le ResultSet pour déterminer la largeur max des données
+            while (rset.next()) {
+                hasResults = true;
+                String[] row = new String[columnCount];
+                for (int i = 1; i <= columnCount; i++) {
+                    String value = rset.getString(i);
+                    if (value == null) value = "";
+                    row[i - 1] = value;
+                    widths[i - 1] = Math.max(widths[i - 1], Math.max(value.length(), rsetmd.getColumnName(i).length()));
+                }
+                rows.add(row);
+            }
+        
+            // Affichage des noms de colonnes
             for (int i = 1; i <= columnCount; i++) {
-                int width = i <= widths.length ? widths[i - 1] : 20;
-                System.out.printf("%-" + width + "s", rsetmd.getColumnName(i));
+                System.out.printf("%-" + (widths[i - 1] + padding) + "s", rsetmd.getColumnName(i));
             }
             System.out.println();
-            for (int i = 1; i <= columnCount; i++) {
-                int width = i <= widths.length ? widths[i - 1] : 20;
-            }
-
-            System.out.println("\n" + "=".repeat(125));
-            
-            boolean hasResults = false;
-            while (rset.next()) {
-                hasResults = true;  // Au moins un résultat trouvé
-                for (int j = 1; j <= columnCount; j++) {
-                    int width = j <= widths.length ? widths[j - 1] : 20;
-                    String value = rset.getString(j);
-                    if (value == null) value = "";
-                    if (value.length() > width - 1) value = value.substring(0, width - 2) + "…"; 
-                    System.out.printf("%-" + width + "s", value);
+        
+            // Ligne de séparation
+            int totalWidth = Arrays.stream(widths).sum() + columnCount * padding;
+            System.out.println("=".repeat(totalWidth));
+        
+            // Affichage des données
+            for (String[] row : rows) {
+                for (int i = 0; i < columnCount; i++) {
+                    String value = row[i];
+                    if (value.length() > widths[i]) value = value.substring(0, widths[i] - 1) + "…";
+                    System.out.printf("%-" + (widths[i] + padding) + "s", value);
                 }
                 System.out.println();
             }
-
-            System.out.println("=".repeat(125));
-            return hasResults;  // Retourne true si des résultats ont été affichés
+        
+            System.out.println("=".repeat(totalWidth));
+            return hasResults;
         }
     }
     
