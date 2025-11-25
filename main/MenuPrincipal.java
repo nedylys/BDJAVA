@@ -159,13 +159,14 @@ public class MenuPrincipal {
                     PreparedStatement stmtp = connection.prepareStatement(Statement.Price_reduce);
                     int updated = stmtp.executeUpdate();   
                     if (updated > 0) {
-                        System.out.println("💸 Réduction appliquée sur " + updated + " lot(s).");
+                        System.out.println("Réduction appliquée sur " + updated + " lot(s).");
                         connection.commit(); // Validation des changements
                         System.out.println("Modifications validées dans la base de données.");
-                    } else {
-                        System.out.println("Aucune réduction appliquée. Réduction déjà appliquée");
                     }
-                // stmtp.close();
+                    // else {
+                    //     System.out.println("Aucune réduction appliquée. Réduction déjà appliquée");
+                    // }
+                stmtp.close();
                 }
                 
                 System.out.println(" 0 : Retour au menu principal");
@@ -200,7 +201,6 @@ public class MenuPrincipal {
                 System.err.println("Erreur lors de la consultation des alertes de péremption.");
                 e.printStackTrace(System.err);
             }
-
 
         }
    
