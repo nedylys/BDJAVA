@@ -20,7 +20,7 @@ public class SuiviCommande {
         scanner.nextLine();
 
         String requete =
-            "SELECT * from CommandeàLivrer WHERE idCommande = ?";
+            "SELECT * from CommandeaLivrer WHERE idCommande = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(requete)) {
             ps.setInt(1, idCommande);

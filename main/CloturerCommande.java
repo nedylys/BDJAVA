@@ -21,7 +21,7 @@ public class CloturerCommande {
         // Vérifier statut actuel
         String statutActuel = null;
         try (PreparedStatement ps = conn.prepareStatement(
-            "SELECT StatutCommandeL FROM CommandeàLivrer WHERE idCommande = ? FOR UPDATE")) {
+            "SELECT StatutCommandeL FROM CommandeaLivrer WHERE idCommande = ? FOR UPDATE")) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) statutActuel = rs.getString(1);
