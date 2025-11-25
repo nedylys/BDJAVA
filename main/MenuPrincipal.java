@@ -240,11 +240,13 @@ public class MenuPrincipal {
                     System.out.println("Aucune commande trouvée.");
                     return;
                 }
-
+                String statut = moderecuperation.equals("retrait") ? rs.getString("StatutCommandeB") : rs.getString("StatutCommandeL");
                 System.out.println("\n===== Détails de la commande =====");
                 System.out.println("ID commande      : " + rs.getInt("idCommande"));
-                System.out.println("Statut commande  : " + rs.getString("StatutCommandeL"));
-                System.out.println("Date de livraison estimée     : " + rs.getString("DateLivraisonEstimee"));
+                System.out.println("Statut commande  : " + statut );
+                if (moderecuperation.equals("livraison")) {
+                    
+                    System.out.println("Date de livraison estimée     : " + rs.getString("DateLivraisonEstimee"));}
                 System.out.println("===================================\n");
             }
 

@@ -16,6 +16,26 @@ public class ClotureCommande {
         System.out.println("\n=== Clôture d'une commande ===");
         try {
             Scanner scanner = new Scanner(System.in);
+            String requete1 = "SELECT * FROM commande";
+            PreparedStatement commandes = connection.prepareStatement(requete1);
+            ResultSet rs = commandes.executeQuery();
+
+            boolean vide = true;
+            System.out.println("\n===== Commandes =====");
+
+            while (rs.next()) {
+                vide = false;
+                System.out.println("ID commande       : " + rs.getInt("idCommande"));
+                System.out.println("ID client         : " + rs.getInt("idClient"));
+                System.out.println("Mode récupération : " + rs.getString("ModeRecuperation"));
+                System.out.println("------------------------------");
+            }
+
+            if (vide) {
+                System.out.println("Aucune commande trouvée.");
+            }
+
+
 
             System.out.print("ID commande : ");
             int id = Integer.parseInt(scanner.nextLine());
