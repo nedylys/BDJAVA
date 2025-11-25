@@ -476,7 +476,7 @@ BEGIN
     END IF;
 END;
 / */
-commit;
+/* commit;
 
 DROP TRIGGER TRG_CREATE_CLIENT_ANONYME;
 DROP TRIGGER VERIF_COMMANDEC_STOCK;
@@ -490,3 +490,11 @@ DROP trigger verif_stock_contenant;
 DROP trigger verif_stock_produit;
 DROP trigger verif_suppression_client;
 
+SELECT 
+    uc.constraint_name,
+    uc.table_name,
+    ucc.column_name
+FROM user_constraints uc
+JOIN user_cons_columns ucc
+    ON uc.constraint_name = ucc.constraint_name
+WHERE uc.constraint_name = 'SYS_C001323422'; */
