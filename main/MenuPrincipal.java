@@ -46,7 +46,7 @@ public class MenuPrincipal {
                     case 2 -> passerCommande(scanner);
                     case 3 -> suiviCommandes();
                     case 4 -> consulterAlertes(scanner,choix);
-                    case 5 -> cloturerCommande();
+                    case 5 -> cloturerUneCommande();
                     case 6 -> System.out.println("Au revoir !");
                     default -> System.out.println("Choix invalide, veuillez réessayer.");
                 }
@@ -160,9 +160,12 @@ public class MenuPrincipal {
                     int updated = stmtp.executeUpdate();   
                     if (updated > 0) {
                         System.out.println("💸 Réduction appliquée sur " + updated + " lot(s).");
+                        connection.commit(); // Validation des changements
+                        System.out.println("Modifications validées dans la base de données.");
                     } else {
-                        System.out.println("Aucune réduction appliquée.");
+                        System.out.println("Aucune réduction appliquée. Réduction déjà appliquée");
                     }
+                // stmtp.close();
                 }
                 
                 System.out.println(" 0 : Retour au menu principal");
@@ -200,141 +203,75 @@ public class MenuPrincipal {
 
 
         }
-    
-    public void cloturerCommande() {
-        System.out.println("\n=== Clôture d'une commande ===");
-        try {
-            Scanner scanner = new Scanner(System.in);
+   
+    public void cloturerUneCommande(){
+            System.out.println("\n ==================================== Espace clôture de commande ====================================");
 
-            System.out.print("ID commande : ");
-            int id = Integer.parseInt(scanner.nextLine());
+            ClotureCommande cloture = new ClotureCommande(connection,this);
+            cloture.cloturerCommande();
+        }
+    public void suiviCommandes(){
+        System.out.println("\n=== Suivi des commandes ===");
+        System.out.print("Entrez l'ID de la commande : ");
+        Scanner scanner = new Scanner(System.in); 
+        System.out.print("ID commande : ");
+        int id = Integer.parseInt(scanner.nextLine());
 
-            // 1) Lire le statut actuel
-            String statutActuel = null;
-            try (PreparedStatement ps = connection.prepareStatement(
-                    "SELECT StatutCommandeL FROM CommandeaLivrer WHERE idCommande = ? FOR UPDATE")) {
-                ps.setInt(1, id);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        statutActuel = rs.getString(1); // 'En preparation', 'Prete', ...
-                    } else {
-                        System.out.println("Commande inexistante.");
-                        return;
-                    }
+        String requete = ""; 
+
+        System.out.print("Mode de récupération (ex: livraison, retrait) : ");
+        String moderecuperation = scanner.nextLine();
+
+        if (moderecuperation.equals("livraison")) {
+            requete =
+            "SELECT * from CommandeaLivrer WHERE idCommande = ?";
+ 
+        } else if (moderecuperation.equals("retrait")) {
+            requete = " select * from commandeenboutique where idCommande = ? ";
+        }
+        else {
+            System.out.println("Mode de récupération invalide. Veuillez réessayer.");
+            return;
+        }
+
+        try (PreparedStatement ps = connection.prepareStatement(requete)) {
+            ps.setInt(1, id );
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                if (!rs.next()) {
+                    System.out.println("Aucune commande trouvée.");
+                    return;
+                }
+
+                System.out.println("\n===== Détails de la commande =====");
+                System.out.println("ID commande      : " + rs.getInt("idCommande"));
+                System.out.println("Statut commande  : " + rs.getString("StatutCommandeL"));
+                System.out.println("Date de livraison estimée     : " + rs.getString("DateLivraisonEstimee"));
+                System.out.println("===================================\n");
+            }
+
+            System.out.println( " Taper 0 pour revenir au Menu principal");
+            int choix = scanner.nextInt();
+
+            switch (choix) {
+                case 0 -> {
+        
+                    afficherMenu();
+                }    
+                
+                default -> {
+                    System.out.println("Choix invalide, veuillez réessayer !");
                 }
             }
+            scanner.close();
 
             
-            if (!"En preparation".equals(statutActuel) &&
-                !"Prete".equals(statutActuel)) {
-                System.out.println("Cette commande ne peut plus être clôturée.");
-                return;
-            }
-
-            
-            System.out.print("Mode récupération (RETRAIT / LIVRAISON) : ");
-            String modeSaisi = scanner.nextLine().trim();
-
-            String modeRecup;
-            if (modeSaisi.equalsIgnoreCase("RETRAIT")) {
-                modeRecup = "Retrait";
-            } else if (modeSaisi.equalsIgnoreCase("LIVRAISON")) {
-                modeRecup = "Livraison";
-            } else {
-                System.out.println("Mode de récupération invalide.");
-                return;
-            }
-
-            
-            System.out.print("Mode paiement (En ligne / En boutique) : ");
-            String paiementSaisi = scanner.nextLine().trim();
-
-            String modePaiement;
-            if (paiementSaisi.equalsIgnoreCase("En ligne")) {
-                modePaiement = "En ligne";
-            } else if (paiementSaisi.equalsIgnoreCase("En boutique")) {
-                modePaiement = "En boutique";
-            } else {
-                System.out.println("Mode de paiement invalide.");
-                return;
-            }
-
-            
-            try (PreparedStatement ps = connection.prepareStatement(
-                    "UPDATE Commande SET ModePaiement = ?, ModeRecuperation = ? WHERE idCommande = ?")) {
-                ps.setString(1, modePaiement);  
-                ps.setString(2, modeRecup);      
-                ps.setInt(3, id);
-                ps.executeUpdate();
-            }
-
-            
-            if (modeRecup.equals("Livraison")) {
-                double frais = 7.5;
-                System.out.println("Frais de livraison : " + frais + " €");
-
-                try (PreparedStatement ps = connection.prepareStatement(
-                        "UPDATE CommandeaLivrer " +
-                        "SET FraisLivraison = ?, DateLivraisonEstimee = SYSDATE " +
-                        "WHERE idCommande = ?")) {
-                    ps.setDouble(1, frais);
-                    ps.setInt(2, id);
-                    ps.executeUpdate();
-                }
-            }
-
-            
-            String statutFinal = "Livree"; // on considère que la clôture = Livree
-
-            try (PreparedStatement ps = connection.prepareStatement(
-                    "UPDATE CommandeaLivrer SET StatutCommandeL = ? WHERE idCommande = ?")) {
-                ps.setString(1, statutFinal);
-                ps.setInt(2, id);
-                ps.executeUpdate();
-            }
-
-            connection.commit();
-            System.out.println("Commande clôturée avec succès.");
-
-        } catch (Exception e) {
-            System.err.println("Erreur : " + e.getMessage());
-            try { connection.rollback(); } catch (Exception ignore) {}
+        } catch (SQLException e) {
+            System.err.println("Erreur SQL : " + e.getMessage());
+            try { connection.rollback(); } catch (SQLException ignore) {}
         }
     }
-
-    
-    public void suiviCommandes(){
-            System.out.println("\n=== Suivi des commandes ===");
-            System.out.print("Entrez l'ID de la commande : ");
-            
-
-            String requete =
-                "SELECT * from CommandeaLivrer WHERE idCommande = ?";
-
-            try (PreparedStatement ps = connection.prepareStatement(requete)) {
-                ps.setInt(1, 1001);
-
-                try (ResultSet rs = ps.executeQuery()) {
-
-                    if (!rs.next()) {
-                        System.out.println("Aucune commande trouvée.");
-                        return;
-                    }
-
-                    System.out.println("\n===== Détails de la commande =====");
-                    System.out.println("ID commande      : " + rs.getInt("idCommande"));
-                    System.out.println("Statut commande  : " + rs.getString("StatutCommandeL"));
-                    System.out.println("Date de livraison estimée     : " + rs.getString("DateLivraisonEstimee"));
-                    System.out.println("===================================\n");
-                }
-
-                connection.commit();
-                
-            } catch (SQLException e) {
-                System.err.println("Erreur SQL : " + e.getMessage());
-                try { connection.rollback(); } catch (SQLException ignore) {}
-            }
-        }
         private boolean dumpResultSet(ResultSet rset) throws SQLException {
             ResultSetMetaData rsetmd = rset.getMetaData();
             int columnCount = rsetmd.getColumnCount();
