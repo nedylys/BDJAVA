@@ -35,7 +35,8 @@ public class Statement{
         AND CEIL(DatePeremption - SYSDATE) >= 0
         AND (REMISE_APPLIQUEE = 0 OR REMISE_APPLIQUEE IS NULL)
     """;
-        
+    
+
     //   l.DATERÉCEPTIONP,
 
     

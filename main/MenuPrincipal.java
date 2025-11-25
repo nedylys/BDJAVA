@@ -28,7 +28,8 @@ public class MenuPrincipal {
                 System.out.println("3. Suivi des commandes");
                 System.out.println("4. Consulter les alertes de péremption");
                 System.out.println("5. Clôturer une commande");
-                System.out.println("6. Quitter");
+                System.out.println("6. Supprimer un compte Client");
+                System.out.println("7. Quitter");
                 System.out.println("========================================================");
                 System.out.println("Saisissez un choix s'il vous plaît ");
     
@@ -47,7 +48,8 @@ public class MenuPrincipal {
                     case 3 -> suiviCommandes();
                     case 4 -> consulterAlertes(scanner,choix);
                     case 5 -> cloturerUneCommande();
-                    case 6 -> System.out.println("Au revoir !");
+                    case 6 -> suppressionCompte();
+                    case 7 -> System.out.println("Au revoir !");
                     default -> System.out.println("Choix invalide, veuillez réessayer.");
                 }
             }
@@ -204,6 +206,20 @@ public class MenuPrincipal {
 
         }
    
+    public void suppressionCompte(){
+        System.out.println("\n ==================================== Espace suppression de compte ====================================");
+        System.out.print("Entrez votre email : ");
+        Scanner scanner = new Scanner(System.in); 
+        String emailClient = scanner.nextLine();        
+        SupprimerCompte suppr = new SupprimerCompte(emailClient,connection);
+        suppr.supprimerCompte();
+        System.out.println(" Retour au menu principal");
+        // attendre 2 secondes
+        
+        MenuPrincipal menu = new MenuPrincipal(connection);
+        menu.afficherMenu();
+    }
+
     public void cloturerUneCommande(){
             System.out.println("\n ==================================== Espace clôture de commande ====================================");
 
