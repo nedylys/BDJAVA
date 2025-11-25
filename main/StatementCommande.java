@@ -31,6 +31,8 @@ public class StatementCommande{
     
     static final String STNvClient = " INSERT INTO Client VALUES(?,?,?,?,?) ";
 
+    static final String STNVCLIENTANONYME = " INSERT INTO ClientAnonyme VALUES(?) ";
+
     static final String STNVADRESSECLIENT = " INSERT INTO ClientAPourAdresseLivraison VALUES(?,?) ";
     
     static final String STNVADRESSE = " INSERT INTO AdresseLivraison VALUES(?) ";
@@ -183,7 +185,7 @@ public class StatementCommande{
             while (rset.next()){
                 iPoids++;
                 double poids = rset.getDouble(1);
-                System.out.println(iPoids + ". " + poids);
+                System.out.println(iPoids + " : " + poids);
             }
             rset.close();
             stmt.close();
@@ -365,6 +367,22 @@ public class StatementCommande{
             return 0;
       }
     } 
+    public void ajouteNovClientAnonyme(int idClient){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STNVCLIENTANONYME);
+        stmt.setInt(1,idClient);
+        int nbAjout = stmt.executeUpdate();
+        if (nbAjout == 1){
+            System.out.println("Le clientAnonyme a bien été ajouté dans la base de données");
+        } else{
+            System.out.println("Echec de l'opération le clientAnonyme n'a pas été ajouté ");
+        }
+        stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
     public void ajouteNovClient(String[] argsClient,int idClient){
     try{
         PreparedStatement stmt = conn.prepareStatement(STNvClient);
@@ -372,11 +390,10 @@ public class StatementCommande{
             stmt.setString(i+1,argsClient[i]);
         }
         stmt.setInt(5,idClient);
+        this.ajouteNovClientAnonyme(idClient);
         int nbAjout = stmt.executeUpdate();
-        if (nbAjout == 2){
+        if (nbAjout == 1){
             System.out.println("Le client a bien été ajouté dans la base de données");
-        }else if (nbAjout == 1){
-            System.out.println("La creation de ClientAnonyme a echoué");
         } else{
             System.out.println("Echec de l'opération le client n'a pas été ajouté ");
         }
@@ -386,12 +403,14 @@ public class StatementCommande{
             e.printStackTrace(System.err);
       }
     }
+    
     public void ajouteNovAdresse(String adresseClient,String emailClient){
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
         stmt.setString(1,adresseClient);
         stmt2.setString(1,emailClient);
+        stmt2.setString(2, adresseClient);
         int nbAjout = stmt.executeUpdate();
         int nbAjout2 = stmt2.executeUpdate();
         if (nbAjout2 + nbAjout == 2){
@@ -516,7 +535,7 @@ public class StatementCommande{
             e.printStackTrace(System.err);
       }
     }
-    public double ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
+    public void ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTP);
         stmt.setInt(1,argsCommandeP[2]);
@@ -533,12 +552,44 @@ public class StatementCommande{
             argsCommandeP[0]++;
             double qtedispo = rset.getDouble(3);
             double prix = rset.getDouble(1);
-            String date = rset.getString(2);
-            System.out.println(date);
+            java.util.Date date = rset.getDate(2);
+            String actual_date = sdf.format(date);
             double quantite = Math.min(quantiteP,qtedispo);
             double sousTotal = quantite*prix;
             double[] argsDouble = {quantite,prix,sousTotal};
-            ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, date,PoidsUnitaire);
+            ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, actual_date,PoidsUnitaire);
+            prixTotal += sousTotal;
+            quantiteP -= qtedispo;
+        }
+        rset.close();
+        stmt.close();
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+    public double retournePrixCommandeP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
+        try{
+        PreparedStatement stmt = conn.prepareStatement(STCARACTP);
+        stmt.setInt(1,argsCommandeP[2]);
+        stmt.setString(2, ModeConditionnement);
+        stmt.setDouble(3,PoidsUnitaire);
+        java.util.Date now = new java.util.Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dateparam = sdf.format(now);
+        stmt.setString(4, dateparam);
+        ResultSet rset = stmt.executeQuery();
+        double prixTotal = 0;
+        while(quantiteP > 0){
+            rset.next();
+            argsCommandeP[0]++;
+            double qtedispo = rset.getDouble(3);
+            double prix = rset.getDouble(1);
+            java.util.Date date = rset.getDate(2);
+            String actual_date = sdf.format(date);
+            double quantite = Math.min(quantiteP,qtedispo);
+            double sousTotal = quantite*prix;
+            double[] argsDouble = {quantite,prix,sousTotal};
             prixTotal += sousTotal;
             quantiteP -= qtedispo;
         }
@@ -551,7 +602,34 @@ public class StatementCommande{
             return 0;
       }
     }
-    public double ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC){
+    public double retournePrixCommandeC(int[] argsCommandeC,int quantiteC){
+        try{
+        PreparedStatement stmt = conn.prepareStatement(STCARACTC);
+        stmt.setInt(1,argsCommandeC[2]);
+        ResultSet rset = stmt.executeQuery();
+        double prixTotal = 0;
+        while(quantiteC > 0){
+            rset.next();
+            argsCommandeC[0]++;
+            int qtedispo = rset.getInt(2);
+            double prix = rset.getDouble(3);
+            String date = rset.getString(1);
+            double sousTotal = quantiteC*prix;
+            int quantite = Math.min(quantiteC,qtedispo);
+            double[] argsDouble = {prix,sousTotal};
+            prixTotal += sousTotal;
+            quantiteC -= qtedispo;
+        }
+        rset.close();
+        stmt.close();
+        return prixTotal;
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return 0;
+      }
+    }       
+    public void ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC){
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
         stmt.setInt(1,argsCommandeC[2]);
@@ -572,11 +650,9 @@ public class StatementCommande{
         }
         rset.close();
         stmt.close();
-        return prixTotal;
       }catch (SQLException e) {
             System.err.println("failed");
             e.printStackTrace(System.err);
-            return 0;
       }
     }           
 }

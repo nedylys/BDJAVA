@@ -11,7 +11,9 @@ public class PassCommande{
     private Scanner scan;
     private int idCommande;
     private double prixCommande;
-    
+    private ArrayList<Commande> panierCommandeC;
+    private ArrayList<CommandeProduit> panierCommandeP;
+
     public PassCommande(Connection conn,Scanner scan,MenuPrincipal menu){
         this.conn = conn;
         this.scan = scan;
@@ -19,6 +21,8 @@ public class PassCommande{
         this.menu = menu;
         prixCommande = 0;
         idCommande = statementcomm.nbIdCommade();
+        this.panierCommandeC = new ArrayList<Commande>();
+        this.panierCommandeP = new ArrayList<CommandeProduit>();
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -43,6 +47,9 @@ public class PassCommande{
             retour();
         }
     }
+    public void enregistrerClient(){
+
+    }
     public void commandeProduit(){
         System.out.println("Entrer l'idProduit : ");
         int idProduit = scan.nextInt();
@@ -65,7 +72,7 @@ public class PassCommande{
         }else{
             System.out.println("Les poidsUnitaire disponibles : ");
             statementcomm.choisirPoidsUnitaire(idProduit);
-            System.out.println("Entrer le poids unitaire : ");
+            System.out.println("Entrer le poids unitaire (ila kntni safih : 5ssk taper le POIDS machi le numéro) : ");
             PoidsUnitaire = scan.nextDouble();
             scan.nextLine();
         }
@@ -78,7 +85,6 @@ public class PassCommande{
             int delai = statementcomm.getDelaiDispo(idProduit);
             System.out.println("Votre produit sera disponible dans " + delai);
         }else{
-            System.out.println("Votre produit est en stock ");
             boolean dispo = statementcomm.getDispo(idProduit, qte, ModeConditionnement, PoidsUnitaire);
             if (!dispo){
                 System.out.println(" 1 : Recommander un Produit ");
@@ -97,8 +103,11 @@ public class PassCommande{
         if (creecommande){
             int numligneP = 0;
             int[] argsCommande = {numligneP,idCommande,idProduit};
-            double prix = statementcomm.ajouteCommandeGlobalP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
+            double prix = statementcomm.retournePrixCommandeP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
+            this.prixCommande += prix;
             System.out.println("Cette commande de ce produit vous couteta " + prix); 
+            CommandeProduit commandeP = new CommandeProduit(argsCommande, qte,ModeConditionnement,PoidsUnitaire);
+            panierCommandeP.add(commandeP);
         }
         System.out.println(" 1 : Recommander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
@@ -109,14 +118,14 @@ public class PassCommande{
         beginCommande();
     }
     public void commandeContenant(){
-        System.out.println(" Entrer l'idContenant : ");
+        System.out.println("Entrer l'idContenant : ");
         int idContenant = scan.nextInt();
         scan.nextLine();
         if (!(statementcomm.verfieIdContenant(idContenant))){
             System.out.println("L'idContenant est faux");
             commandeProduit();
         }
-        System.out.println(" Entrer la quantité souhaitée : ");
+        System.out.println("Entrer la quantité souhaitée : ");
         int qte = scan.nextInt();
         scan.nextLine();
         boolean dispo = statementcomm.getDispoContenant(idContenant, qte);
@@ -130,18 +139,19 @@ public class PassCommande{
         if (creecommande){
             int numligneC = 0;
             int[] argsCommandeC = {numligneC,idCommande,idContenant};
-            double prix = statementcomm.ajouteCommandeGlobalC(argsCommandeC, qte);
+            double prix = statementcomm.retournePrixCommandeC(argsCommandeC, qte);
             this.prixCommande += prix;
-            System.out.println("Cette commande de ce contenat vous couteta " + prix); 
-        } else{
-            System.out.println("1 : Commander un Produit ");
-            System.out.println(" 2 : Recommander un Contenant");
-            System.out.println(" 3 : Annuler la commande ");
-            System.out.println(" 4 : Finaliser la commande ");
-            System.out.println(" 5 : Retour au menu prinicpal");
-            System.out.println("Taper le numéro choisi:");
-            beginCommande();
+            System.out.println("Cette commande de ce contenant vous couteta " + prix); 
+            Commande commandeC = new Commande(argsCommandeC, (double) qte);
+            panierCommandeC.add(commandeC);
         }
+        System.out.println(" 1 : Commander un Produit ");
+        System.out.println(" 2 : Recommander un Contenant");
+        System.out.println(" 3 : Annuler la commande ");
+        System.out.println(" 4 : Finaliser la commande ");
+        System.out.println(" 5 : Retour au menu prinicpal");
+        System.out.println("Taper le numéro choisi:");
+        beginCommande();
     }
     public void finalCommande(){
         System.out.println("C'est un nouveau client ? ");
@@ -184,21 +194,27 @@ public class PassCommande{
         System.out.println("Taper true or false : ");
         boolean livraison = scan.nextBoolean();
         scan.nextLine();
-        String ModeRecuperation;
+        String ModeRecuperation = ""; // afin d'initiliser argsCommande
+        String [] argsCommande = {ModePaiement,ModeRecuperation};
         String adresse;
         if (livraison){
             ModeRecuperation = "Livraison";
-            System.out.println("Utiliser une nouvelle adresse de livraison ou non ");
-            System.out.println("Taper true or false : ");
-            boolean adresselivraison = scan.nextBoolean();
-            scan.nextLine();
+            boolean adresselivraison;
+            if (!nvclient){
+                System.out.println("Utiliser une nouvelle adresse de livraison ou non ");
+                System.out.println("Taper true or false : ");
+                adresselivraison = scan.nextBoolean();
+                scan.nextLine();
+            } else {
+                adresselivraison = true;
+            }
             if (adresselivraison){
                System.out.println("Entrer l'adresse de livraison : ");
                adresse = scan.nextLine();
                statementcomm.ajouteNovAdresse(adresse, emailClient);
             } else{
                 ArrayList<String> adresseArray = statementcomm.getAdresseClient(idClient);
-                System.out.println("Choisisez l'addresse de livraison : ");
+                System.out.println("Choisisez l'addresse de livraison (taper le numéro ila knti safih) : ");
                 int numchoisi = scan.nextInt();
                 scan.nextLine();
                 adresse = adresseArray.get(numchoisi - 1);
@@ -210,14 +226,27 @@ public class PassCommande{
             System.out.println("L'écrire en format YYYY-MM-DD : ");
             String dateLivraison = scan.nextLine();
             String[] argsLivraison = {dateLivraison,adresse};
+            statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeLivrer(idCommande, fraisLivraison, argsLivraison);
         } else{
             ModeRecuperation = "Retrait en boutique";
+            statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeBoutique(idCommande);
         }
-        String [] argsCommande = {ModePaiement,ModeRecuperation};
-        statementcomm.creeCommande(idCommande, idClient, argsCommande);
-        System.err.println("La commande globale vous coutera " + this.prixCommande);
+        for (CommandeProduit commandeP : panierCommandeP){
+             int[] argsCommandeP = commandeP.getArgsCommande();
+             double qteP = commandeP.getQte();
+             String ModedeConditionnement = commandeP.getModeConditionnement();
+             double PoidsUnitaire = commandeP.getPoidsUnitaire();
+             statementcomm.ajouteCommandeGlobalP(argsCommandeP, ModedeConditionnement, qteP, PoidsUnitaire);
+        }
+        for (Commande commandeC : panierCommandeC){
+             int[] argsCommandeC = commandeC.getArgsCommande();
+             double qteC = commandeC.getQte();
+             statementcomm.ajouteCommandeGlobalC(argsCommandeC,(int) qteC);
+        }
+        System.out.println("Cette commande de vous coutera au global " + prixCommande); 
+        System.out.println("La commande globale vous coutera " + this.prixCommande);
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -225,6 +254,7 @@ public class PassCommande{
         System.out.println("Taper le numéro choisi:");
         try {
             conn.commit();
+            System.out.println("La commande a bien été crée");
         } catch (SQLException e) {
         }
         beginCommande();
@@ -232,6 +262,7 @@ public class PassCommande{
     public void annuleCommande(){
         try {
             conn.rollback();
+            System.out.println("La commande a bien été annulée");
         } catch (SQLException e) {
         }
     }
