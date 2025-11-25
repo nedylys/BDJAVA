@@ -198,9 +198,9 @@ CREATE TABLE LigneCommandeProduit(
         ON DELETE CASCADE
 );
 
-ALTER TABLE LotProduit MODIFY (PoidsUnitaire Float);
+/* ALTER TABLE LotProduit MODIFY (PoidsUnitaire Float);
 
-ALTER TABLE LigneCommandeProduit MODIFY (PoidsUnitaire Float);
+ALTER TABLE LigneCommandeProduit MODIFY (PoidsUnitaire Float); */
 
 CREATE TABLE LigneCommandeContenant(
     numLigneC INT,
@@ -236,12 +236,12 @@ CREATE TABLE CommandeaLivrer(
         REFERENCES AdresseLivraison(AdresseLivraison)
         ON DELETE CASCADE
 );
-ALTER TABLE CommandeaLivrer
-DROP CONSTRAINT SYS_C001323420;
+/* ALTER TABLE CommandeaLivrer
+DROP CONSTRAINT SYS_C001323420; */
 
-ALTER TABLE CommandeaLivrer
+/* ALTER TABLE CommandeaLivrer
 ADD CONSTRAINT ck_statut_commande_l
-CHECK (StatutCommandeL IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee'));
+CHECK (StatutCommandeL IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee')); */
 
 
 CREATE TABLE CommandeenBoutique(
@@ -253,7 +253,7 @@ CREATE TABLE CommandeenBoutique(
         ON DELETE CASCADE
 );
 
-ALTER TABLE CommandeenBoutique
+/* ALTER TABLE CommandeenBoutique
 DROP CONSTRAINT SYS_C001323405;
 
 ALTER TABLE CommandeenBoutique
@@ -262,12 +262,12 @@ DROP CONSTRAINT SYS_C001323404;
 
 ALTER TABLE CommandeenBoutique
 ADD CONSTRAINT ck_statut_commande_b
-CHECK (StatutCommandeB IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee'));
+CHECK (StatutCommandeB IN ('En preparation', 'Prete', 'En livraison', 'Livree', 'Annulee')); */
 
-SELECT StatutCommandeB FROM CommandeenBoutique;
+/* SELECT StatutCommandeB FROM CommandeenBoutique;
 UPDATE CommandeenBoutique
 SET StatutCommandeB = 'Prete'
-WHERE StatutCommandeB = 'Prête';
+WHERE StatutCommandeB = 'Prête'; */
 
 
 CREATE TABLE PerteProduit(
@@ -314,7 +314,7 @@ CREATE TABLE ProduitCommande(
 );
 
 
-CREATE OR REPLACE TRIGGER Verif_Suppression_Client
+/* CREATE OR REPLACE TRIGGER Verif_Suppression_Client
 -- Trigger pour vérifier si un client a des commandes avant suppression
 BEFORE DELETE ON Client -- avant la suppression d'un client (une ligne de la table Client)
 FOR EACH ROW
@@ -331,10 +331,10 @@ BEGIN
         END IF;
     END;
 END;
-/
+/ */
 
 
-CREATE OR REPLACE TRIGGER Verif_sous_total_ligneP
+/* CREATE OR REPLACE TRIGGER Verif_sous_total_ligneP
 BEFORE INSERT OR UPDATE ON LigneCommandeProduit
 FOR EACH ROW
 BEGIN
@@ -342,9 +342,9 @@ BEGIN
         RAISE_APPLICATION_ERROR(-32, 'Le sous-total de la ligne de commande produit est incorrect.');
     END IF;
 END;
-/
+/ */
 
-CREATE OR REPLACE TRIGGER Verif_sous_total_ligneC
+/* CREATE OR REPLACE TRIGGER Verif_sous_total_ligneC
 BEFORE INSERT OR UPDATE ON LigneCommandeContenant
 FOR EACH ROW
 BEGIN
@@ -352,10 +352,10 @@ BEGIN
         RAISE_APPLICATION_ERROR(-32, 'Le sous-total de la ligne de commande contenant est incorrect.');
     END IF;
 END;
-/
+/ */
 
 
-CREATE OR REPLACE TRIGGER verif_statut_commande
+/* CREATE OR REPLACE TRIGGER verif_statut_commande
 BEFORE UPDATE ON CommandeaLivrer
 FOR EACH ROW
 BEGIN
@@ -364,9 +364,9 @@ BEGIN
         RAISE_APPLICATION_ERROR(-33, 'Statut invalide : une commande livree ou annulee ne peut pas être réouverte.');
     END IF;
 END;
-/
+/ */
 
-CREATE OR REPLACE TRIGGER Verif_commandeP_stock
+/* CREATE OR REPLACE TRIGGER Verif_commandeP_stock
 BEFORE INSERT OR UPDATE ON LigneCommandeProduit
 FOR EACH ROW
 DECLARE
@@ -379,9 +379,9 @@ BEGIN
         RAISE_APPLICATION_ERROR(-34, 'Quantité commandée pour ce produit > stock disponible');
     END IF;
 END;
-/
+/ */
 
-CREATE OR REPLACE TRIGGER Verif_commandeC_stock
+/* CREATE OR REPLACE TRIGGER Verif_commandeC_stock
 BEFORE INSERT OR UPDATE ON LigneCommandeContenant
 FOR EACH ROW
 DECLARE
@@ -394,9 +394,9 @@ BEGIN
         RAISE_APPLICATION_ERROR(-35, 'Quantité commandée pour ce contenant > stock disponible');
     END IF;
 END;
-/
+/ */
 
-CREATE OR REPLACE TRIGGER Verif_perte_produit_stock
+/* CREATE OR REPLACE TRIGGER Verif_perte_produit_stock
 BEFORE INSERT OR UPDATE ON PerteProduit
 FOR EACH ROW
 DECLARE
@@ -410,9 +410,9 @@ BEGIN
     END IF;
 END;
 /
+ */
 
-
-CREATE OR REPLACE TRIGGER Verif_perte_contenant_stock
+/* CREATE OR REPLACE TRIGGER Verif_perte_contenant_stock
 BEFORE INSERT OR UPDATE ON PerteContenant
 FOR EACH ROW
 DECLARE
@@ -425,10 +425,10 @@ BEGIN
         RAISE_APPLICATION_ERROR(-36, 'Quantité perdue pour ce contenant > stock disponible');
     END IF;
 END;
-/
+/ */
 
 
-CREATE OR REPLACE TRIGGER verif_stock_produit
+/* CREATE OR REPLACE TRIGGER verif_stock_produit
 BEFORE INSERT OR UPDATE ON LotProduit
 FOR EACH ROW
 DECLARE
@@ -451,9 +451,9 @@ BEGIN
     END IF;
 END;
 /
+ */
 
-
-CREATE OR REPLACE TRIGGER verif_stock_contenant
+/* CREATE OR REPLACE TRIGGER verif_stock_contenant
 BEFORE INSERT OR UPDATE ON LotContenant
 FOR EACH ROW
 DECLARE
@@ -475,5 +475,26 @@ BEGIN
         RAISE_APPLICATION_ERROR(-37, 'Erreur : la somme des quantités des lots ne correspond pas au stock du contenant.');
     END IF;
 END;
-/
-commit;
+/ */
+/* commit;
+
+DROP TRIGGER TRG_CREATE_CLIENT_ANONYME;
+DROP TRIGGER VERIF_COMMANDEC_STOCK;
+DROP TRIGGER VERIF_commandep_stock;
+DROP trigger verif_perte_contenant_stock;
+DROP trigger verif_perte_produit_stock;
+DROP trigger verif_sous_total_lignec;
+DROP trigger verif_sous_total_lignep;
+DROP trigger verif_statut_commande;
+DROP trigger verif_stock_contenant;
+DROP trigger verif_stock_produit;
+DROP trigger verif_suppression_client;
+
+SELECT 
+    uc.constraint_name,
+    uc.table_name,
+    ucc.column_name
+FROM user_constraints uc
+JOIN user_cons_columns ucc
+    ON uc.constraint_name = ucc.constraint_name
+WHERE uc.constraint_name = 'SYS_C001323422'; */
