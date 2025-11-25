@@ -1,7 +1,13 @@
 package main;
 
 public class Statement{
-    static final String PRE_STMT = "select * from Produit";
+    static final String PRE_STMT = """
+                SELECT l.idproduit, l.modeconditionnement, p.nomproduit, p.descriptionproduit, p.categorieproduit, l.poidsUnitaire, sum(l.quantitedisponiblep) as QantititéDisponible
+                FROM lotproduit l, produit p
+                where l.idproduit = p.idproduit
+                group by (l.idproduit, p.nomproduit, l.modeconditionnement, p.descriptionproduit, p.categorieproduit, poidsUnitaire)
+                """;
+
     static final String ALERTES_PRE = """
         SELECT  
             p.IDPRODUIT,
@@ -12,7 +18,7 @@ public class Statement{
             CEIL(l.DatePeremption - SYSDATE) AS jours_restants,
             l.PRIXVENTEPTTC AS Prix_actuel_euros,
             (l.PRIXVENTEPTTC / (0.7)) AS Prix_Vente_TTC_initiale,
-            l.REMISE_APPLIQUEE
+            l.REMISE_APPLIQUEEs
 
         FROM Produit p
         JOIN LotProduit l ON l.IdProduit = p.IdProduit

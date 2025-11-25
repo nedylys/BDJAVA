@@ -19,7 +19,7 @@ public class StatementCommande{
 
     static final String STVERIFPOIDS = "select PoidsUnitaire from LotProduit where idProduit = ? and ModeConditionnement = 'preconditionne'"; 
 
-    static final String STQteStock = "select sum(PoidsUnitaire*QuantiteDisponibleP) from LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
+    static final String STQteStock = "select sum(QuantiteDisponibleP) from LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
     
     static final String STQteContenant = "select sum(QuantiteDisponibleC) from LotContenant where idContenant = ?";
     
