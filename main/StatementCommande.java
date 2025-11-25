@@ -71,9 +71,9 @@ public class StatementCommande{
         this.conn = conn;
     }
    
-    public double calculePrixProduit(int idProduit, double quantite,String ModeConditionnement){
+    public double calculePrixProduit(int idProduit, double quantite,String ModeConditionnement) throws SQLException{
         // Retourne le prix d'une commande d'un produit
-        try{
+        // try{
         PreparedStatement stmt = conn.prepareStatement(STPrixProduit);
         stmt.setInt(1, idProduit);
         ResultSet rset = stmt.executeQuery();
@@ -82,15 +82,16 @@ public class StatementCommande{
         rset.close();
         stmt.close();
         return prix*quantite;
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return 0;
-      }
+    //   }
+    //   catch (SQLException e) {
+    //         System.err.println("failed");
+    //         e.printStackTrace(System.err);
+    //         return 0;
+    //   }
     }
-    public double calculePrixContenant(int idContenant, int quantite){
+    public double calculePrixContenant(int idContenant, int quantite) throws SQLException{
         // Retourne le prix d'une commande d'un contenant
-        try{
+        // try{
             PreparedStatement stmt = conn.prepareStatement(STPrixContenant);
             stmt.setInt(1, idContenant);
             ResultSet rset = stmt.executeQuery();
@@ -99,11 +100,12 @@ public class StatementCommande{
             rset.close();
             stmt.close();
             return prix*quantite;
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return 0;
-      }
+    //   }
+    //   catch (SQLException e) {
+    //         System.err.println("failed");
+    //         e.printStackTrace(System.err);
+    //         return 0;
+    //   }
     }
     public void getModeConditionnement(int idProduit){
         try{
@@ -365,12 +367,8 @@ public class StatementCommande{
             return 0;
       }
     } 
-    public void ajouteNovClient(String[] argsClient,int idClient){
-    try{
+    public void ajouteNovClient(String[] argsClient,int idClient) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STNvClient);
-        for (int i = 0; i<4;i++){
-            stmt.setString(i+1,argsClient[i]);
-        }
         stmt.setInt(5,idClient);
         int nbAjout = stmt.executeUpdate();
         if (nbAjout == 2){
@@ -381,13 +379,8 @@ public class StatementCommande{
             System.out.println("Echec de l'opération le client n'a pas été ajouté ");
         }
         stmt.close();
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-      }
     }
-    public void ajouteNovAdresse(String adresseClient,String emailClient){
-    try{
+    public void ajouteNovAdresse(String adresseClient,String emailClient) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
         stmt.setString(1,adresseClient);
@@ -401,10 +394,6 @@ public class StatementCommande{
         }
         stmt.close();
         stmt2.close();
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-      }
     }
     public ArrayList<String> getAdresseClient(int idClient){
     // Retourne les adressesLivraison d'un client à partir de son idClient
@@ -429,8 +418,7 @@ public class StatementCommande{
             return null;
       }
     }
-    public void creeCommande(int idCommande,int idClient,String[] argsCommande){
-    try{
+    public void creeCommande(int idCommande,int idClient,String[] argsCommande) throws SQLException {
         PreparedStatement stmt = conn.prepareStatement(STNVCOMMANDE);
         stmt.setInt(1,idCommande);
         java.util.Date now = new java.util.Date();
@@ -443,26 +431,15 @@ public class StatementCommande{
         stmt.setString(4,argsCommande[0]);
         stmt.setString(5, argsCommande[1]);
         stmt.setInt(6, idClient);
-        int nbAjout = stmt.executeUpdate();
+        stmt.executeUpdate();
         stmt.close();
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-      }
     }
-    public void commandeBoutique(int idCommande){
-    try{
+    public void commandeBoutique(int idCommande) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STCOMMBOUTIQUE);
         stmt.setInt(1,idCommande);
-        int nbAjout = stmt.executeUpdate();
-        stmt.close();
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-      }
+        stmt.executeUpdate();
     }
-    public void commandeLivrer(int idCommande,double fraisLivraison,String[] argsLivraison){
-    try{
+    public void commandeLivrer(int idCommande,double fraisLivraison,String[] argsLivraison) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STCOMMLIVRER);
         stmt.setInt(1,idCommande);
         stmt.setDouble(2, fraisLivraison);
@@ -475,13 +452,8 @@ public class StatementCommande{
             System.out.println("Echec de la création de la CommandeLivrer");
         }
         stmt.close();
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-      }
     }
-    public void ajouteCommandeP(int[] argsCommandeP,String ModeConditionnement,double[] argsDouble,String date,double PoidsUnitaire){
-    try{
+    public void ajouteCommandeP(int[] argsCommandeP,String ModeConditionnement,double[] argsDouble,String date,double PoidsUnitaire) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STNVLIGNEP);
         for (int i = 0; i<3;i++){
             stmt.setInt(i+1,argsCommandeP[i]);
@@ -492,15 +464,10 @@ public class StatementCommande{
         stmt.setDouble(7, argsDouble[0]);
         stmt.setDouble(8, argsDouble[1]);
         stmt.setDouble(9, argsDouble[2]);
-        int nbAjout = stmt.executeUpdate();
+        stmt.executeUpdate();
         stmt.close();
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-      }
     }
-    public void ajouteCommandeC(int[] argsCommandeC,double[] argsDouble,String date,int quantiteC){
-    try{
+    public void ajouteCommandeC(int[] argsCommandeC,double[] argsDouble,String date,int quantiteC) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STNVLIGNEC);
         for (int i = 0; i<3;i++){
             stmt.setInt(i+1,argsCommandeC[i]);
@@ -509,15 +476,10 @@ public class StatementCommande{
         stmt.setInt(5,quantiteC);
         stmt.setDouble(6, argsDouble[0]);
         stmt.setDouble(7, argsDouble[1]);
-        int nbAjout = stmt.executeUpdate();
+        stmt.executeUpdate();
         stmt.close();
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-      }
     }
-    public double ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
-        try{
+    public double ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STCARACTP);
         stmt.setInt(1,argsCommandeP[2]);
         stmt.setString(2, ModeConditionnement);
@@ -545,14 +507,8 @@ public class StatementCommande{
         rset.close();
         stmt.close();
         return prixTotal;
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return 0;
-      }
     }
-    public double ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC){
-        try{
+    public double ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
         stmt.setInt(1,argsCommandeC[2]);
         ResultSet rset = stmt.executeQuery();
@@ -573,10 +529,5 @@ public class StatementCommande{
         rset.close();
         stmt.close();
         return prixTotal;
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return 0;
-      }
     }           
 }

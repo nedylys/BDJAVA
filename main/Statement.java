@@ -8,7 +8,6 @@ public class Statement{
             p.IDPRODUCTEUR,
             p.NOMPRODUIT,
             p.CATEGORIEPRODUIT,
-            p.STOCKPRODUIT,
             TO_CHAR(l.DatePeremption, 'YYYY-MM-DD') AS DatePeremption,
             CEIL(l.DatePeremption - SYSDATE) AS jours_restants,
             l.PRIXVENTEPTTC AS Prix_actuel_euros,

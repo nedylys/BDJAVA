@@ -15,3 +15,4 @@ FROM Client cl
 JOIN Commande c ON cl.idClient = c.idClient
 GROUP BY cl.nomClient;
 
+SELECT * FROM Produit;

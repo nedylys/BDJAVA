@@ -11,6 +11,8 @@ public class PassCommande{
     private Scanner scan;
     private int idCommande;
     private double prixCommande;
+    private List<ProduitPanier> panierProduits;
+    private List<ContenantPanier> panierContenants;
     
     public PassCommande(Connection conn,Scanner scan,MenuPrincipal menu){
         this.conn = conn;
@@ -19,6 +21,8 @@ public class PassCommande{
         this.menu = menu;
         prixCommande = 0;
         idCommande = statementcomm.nbIdCommade();
+        panierProduits = new ArrayList<>();
+        panierContenants = new ArrayList<>();
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -97,8 +101,16 @@ public class PassCommande{
         if (creecommande){
             int numligneP = 0;
             int[] argsCommande = {numligneP,idCommande,idProduit};
-            double prix = statementcomm.ajouteCommandeGlobalP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
-            System.out.println("Cette commande de ce produit vous couteta " + prix); 
+            try{
+            // !!!!!!!!!!!!!!!!! il n'a pas payé ni fini sa commande
+            // double prix = statementcomm.ajouteCommandeGlobalP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
+            // System.out.println("Cette commande de ce produit vous couteta " + prix); 
+                panierProduits.add(new ProduitPanier(idProduit, ModeConditionnement, PoidsUnitaire, qte));
+                double prixEstime = statementcomm.calculePrixProduit(idProduit, qte, ModeConditionnement);
+                System.out.println("Produit ajouté au panier ! Coût estimé : " + prixEstime);
+            } catch (SQLException e) {
+                System.out.println("Erreur lors de l'ajout du produit à la commande." + e.getMessage());
+            }
         }
         System.out.println(" 1 : Recommander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
@@ -130,10 +142,18 @@ public class PassCommande{
         if (creecommande){
             int numligneC = 0;
             int[] argsCommandeC = {numligneC,idCommande,idContenant};
-            double prix = statementcomm.ajouteCommandeGlobalC(argsCommandeC, qte);
-            this.prixCommande += prix;
-            System.out.println("Cette commande de ce contenat vous couteta " + prix); 
-        } else{
+            try {
+                // sameee !!
+                // double prix = statementcomm.ajouteCommandeGlobalC(argsCommandeC, qte);
+                // this.prixCommande += prix;
+                // System.out.println("Cette commande de ce contenat vous couteta " + prix); 
+                panierContenants.add(new ContenantPanier(idContenant, qte));
+                double prixEstime = statementcomm.calculePrixContenant(idContenant, qte);
+                System.out.println("Contenant ajouté au panier ! Coût estimé : " + prixEstime);
+            } catch (SQLException e) {
+                System.out.println("Erreur lors de l'ajout du contenant à la commande." + e.getMessage());
+            }
+            } else{
             System.out.println("1 : Commander un Produit ");
             System.out.println(" 2 : Recommander un Contenant");
             System.out.println(" 3 : Annuler la commande ");
@@ -150,6 +170,10 @@ public class PassCommande{
         scan.nextLine();
         String emailClient;
         int idClient;
+
+        String[] argsClient = null;
+
+        // avant la transaction = recup les donnees
         if (nvclient){
             idClient = statementcomm.nbClient();
             System.out.println("Entrer l'email du client : ");
@@ -160,8 +184,8 @@ public class PassCommande{
             String prenom = scan.nextLine();
             System.out.println("Entrer le numéro de telephone du client : ");
             String numtelephone = scan.nextLine();
-            String[] agrsClient = {emailClient,nom,prenom,numtelephone};
-            statementcomm.ajouteNovClient(agrsClient, idClient);
+            argsClient = new String[]{emailClient, nom, prenom, numtelephone};
+            // statementcomm.ajouteNovClient(agrsClient, idClient);
         } else {
             System.out.println("Entrer l'email du client : ");
             emailClient = scan.nextLine();
@@ -174,60 +198,150 @@ public class PassCommande{
         System.out.println("Taper true or false : ");
         boolean paiementligne = scan.nextBoolean();
         scan.nextLine();
-        String ModePaiement;
-        if (paiementligne){
-            ModePaiement = "En ligne";
-        }else{
-            ModePaiement = "En boutique";
-        }
+
+        String ModePaiement = paiementligne ? "En ligne" : "En boutique";        
+        
         System.out.println("Commande à livrer ou non ? ");
         System.out.println("Taper true or false : ");
         boolean livraison = scan.nextBoolean();
         scan.nextLine();
+        
         String ModeRecuperation;
-        String adresse;
+        String adresse = null;
+        double fraisLivraison = 0;
+        String dateLivraison = null;
+        boolean nouvelleAdresse = false;
+        
         if (livraison){
             ModeRecuperation = "Livraison";
-            System.out.println("Utiliser une nouvelle adresse de livraison ou non ");
-            System.out.println("Taper true or false : ");
-            boolean adresselivraison = scan.nextBoolean();
+            System.out.println("Utiliser une nouvelle adresse de livraison ? (true/false) : ");
+            nouvelleAdresse = scan.nextBoolean();
             scan.nextLine();
-            if (adresselivraison){
+            
+            if (nouvelleAdresse){
                System.out.println("Entrer l'adresse de livraison : ");
                adresse = scan.nextLine();
-               statementcomm.ajouteNovAdresse(adresse, emailClient);
+            //    statementcomm.ajouteNovAdresse(adresse, emailClient);
             } else{
                 ArrayList<String> adresseArray = statementcomm.getAdresseClient(idClient);
-                System.out.println("Choisisez l'addresse de livraison : ");
-                int numchoisi = scan.nextInt();
-                scan.nextLine();
-                adresse = adresseArray.get(numchoisi - 1);
+                if(adresseArray != null && !adresseArray.isEmpty()) {
+                    System.out.println("Choisissez l'adresse de livraison (numéro) : ");
+                    int numchoisi = scan.nextInt();
+                    scan.nextLine();
+                    adresse = adresseArray.get(numchoisi - 1);
+                } else {
+                    System.out.println("Aucune adresse trouvée, veuillez en saisir une : ");
+                    adresse = scan.nextLine();
+                    nouvelleAdresse = true;
+                }
             }
             System.out.println("Entrer les frais de livraison éventuels : ");
-            double fraisLivraison = scan.nextDouble();
+            fraisLivraison = scan.nextDouble();
             scan.nextLine();
             System.out.println("Entrer la date de livraison  : ");
             System.out.println("L'écrire en format YYYY-MM-DD : ");
-            String dateLivraison = scan.nextLine();
-            String[] argsLivraison = {dateLivraison,adresse};
-            statementcomm.commandeLivrer(idCommande, fraisLivraison, argsLivraison);
+            dateLivraison = scan.nextLine();
+            
+            // String[] argsLivraison = {dateLivraison,adresse};
+            // statementcomm.commandeLivrer(idCommande, fraisLivraison, argsLivraison);
         } else{
             ModeRecuperation = "Retrait en boutique";
-            statementcomm.commandeBoutique(idCommande);
+            // statementcomm.commandeBoutique(idCommande);
         }
-        String [] argsCommande = {ModePaiement,ModeRecuperation};
-        statementcomm.creeCommande(idCommande, idClient, argsCommande);
-        System.err.println("La commande globale vous coutera " + this.prixCommande);
-        System.out.println(" 1 : Commander un Produit ");
-        System.out.println(" 2 : Commander un Contenant");
-        System.out.println(" 3 : Annuler la commande ");
-        System.out.println(" 5 : Retour au menu prinicpal");
-        System.out.println("Taper le numéro choisi:");
+
+        System.out.println("Validation de la commande en cours...");
+
+        // Debut de la transaction
         try {
+            conn.setAutoCommit(false);
+            // Je cree le client si nouveau
+            if (nvclient && argsClient != null) {
+                statementcomm.ajouteNovClient(argsClient, idClient);
+            }
+
+            // J'ajoute l'adresse si nouvelle
+            if (livraison && nouvelleAdresse && adresse != null) {
+                statementcomm.ajouteNovAdresse(adresse, emailClient);
+            }
+
+            // Je cree la commande PRINCIPALE (table commande)
+            String [] argsCommande = {ModePaiement,ModeRecuperation};
+            statementcomm.creeCommande(idCommande, idClient, argsCommande);
+            if (livraison) {
+            String[] argsLivraison = {dateLivraison, adresse};
+            statementcomm.commandeLivrer(idCommande, fraisLivraison, argsLivraison);
+            this.prixCommande += fraisLivraison;
+            } else {
+            statementcomm.commandeBoutique(idCommande);
+            }
+
+            // panier produits :
+// {numLigne (auto), idCommande, idProduit (changera dans la boucle)}
+            int[] argsProd = {0, idCommande, 0}; 
+            
+            for (ProduitPanier art : panierProduits) {
+                argsProd[2] = art.idProduit; // On met l'ID du produit courant
+
+                // C'est CETTE méthode qui va :
+                // 1. Vérifier le stock (SELECT FOR UPDATE)
+                // 2. Réduire le stock (UPDATE)
+                // 3. Insérer la ligne (INSERT)
+                // Si le stock manque, elle lance une SQLException et tout s'annule.
+                double prixLigne = statementcomm.ajouteCommandeGlobalP(
+                    argsProd, 
+                    art.modeConditionnement, 
+                    art.quantite, 
+                    art.poidsUnitaire
+                );
+                
+                this.prixCommande += prixLigne;
+            }
+
+            // --- D. TRAITEMENT DU PANIER CONTENANTS ---
+            int[] argsCont = {0, idCommande, 0};
+
+            for (ContenantPanier cont : panierContenants) {
+                argsCont[2] = cont.idContenant;
+
+                double prixLigne = statementcomm.ajouteCommandeGlobalC(
+                    argsCont, 
+                    cont.quantite
+                );
+                
+                this.prixCommande += prixLigne;
+            }
+                        // Validation de la transaction
             conn.commit();
+            System.out.println("Commande finalisée avec succès.");
+            System.out.println("Coût total : " + this.prixCommande);
+            panierProduits.clear();
+            panierContenants.clear();
+            this.prixCommande = 0;
+
         } catch (SQLException e) {
+            System.out.println("Erreur lors du démarrage de la transaction : " + e.getMessage());
+            try {
+            System.out.println(" Annulation de la transaction (Rollback)...");
+            conn.rollback(); // le client, l'adresse et la commande ne seront pas créés.
+            } catch (SQLException ex) {
+            ex.printStackTrace();
+            } 
+        } finally {
+            try {
+            conn.setAutoCommit(true); // remise en mode auto-commit
+            } catch (SQLException e) {
+            e.printStackTrace();
+            }
+            System.out.println("\nRetour au menu principal...");
+            try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+            System.err.println("La commande globale vous coutera " + this.prixCommande);
+            System.out.println(" 1 : Commander un Produit ");
+            System.out.println(" 2 : Commander un Contenant");
+            System.out.println(" 3 : Annuler la commande ");
+            System.out.println(" 5 : Retour au menu prinicpal");
+            System.out.println("Taper le numéro choisi:");
+            beginCommande();
         }
-        beginCommande();
     }
     public void annuleCommande(){
         try {
@@ -237,5 +351,30 @@ public class PassCommande{
     }
     public void retour(){
         menu.afficherMenu();
+    }
+
+
+    class ContenantPanier {
+        int idContenant;
+        int quantite;
+
+        public ContenantPanier(int idContenant, int quantite) {
+            this.idContenant = idContenant;
+            this.quantite = quantite;
+        }
+    }
+
+    class ProduitPanier {
+        int idProduit;
+        String modeConditionnement;
+        double poidsUnitaire;
+        double quantite;
+
+        public ProduitPanier(int idProduit, String modeConditionnement, double poidsUnitaire, double quantite) {
+            this.idProduit = idProduit;
+            this.modeConditionnement = modeConditionnement;
+            this.poidsUnitaire = poidsUnitaire;
+            this.quantite = quantite;
+        }
     }
 }
