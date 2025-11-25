@@ -51,7 +51,8 @@ public class ClotureCommande {
                 String adresseLivraison = scanner.nextLine();
                 System.out.print("Distance de livraison (en km) : ");
                 int distance = Integer.parseInt(scanner.nextLine());
-                int FraisLivraison = (distance < 10) ? 5 : (10 + 10*((int)distance/100));
+                int Pays = 1;
+                int FraisLivraison = (distance < 10) ? 5 : (10 + 10*((int)distance/100) + Pays);
                 System.out.print("Date estimée de livraison (YYYY-MM-DD) : ");
                 String dateEstime = scanner.nextLine();
                 requete = " Insert into CommandeaLivrer (idCommande, StatutcommandeL, FraisLivraison, DateLivraisonEstimee, adresseLivraison) values (?,?,?,?,?) " ;

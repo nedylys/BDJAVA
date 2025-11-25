@@ -56,6 +56,22 @@ public class StatementCommande{
     static final String STCARACTC = "SELECT DateReceptionC,QuantiteDisponibleC,PrixVenteCTTC FROM LotContenant where idContenant = ?";
     
     static final String STMODECONDITIONNEMENT = "SELECT DISTINCT ModeConditionnement from LotProduit where idProduit = ?";
+
+    static final String ST_UPDATE_STOCK_P = 
+    "UPDATE LotProduit SET QuantiteDisponibleP = QuantiteDisponibleP - ? " +
+    "WHERE idProduit = ? AND ModeConditionnement = ? AND PoidsUnitaire = ? AND DateReceptionP = ?";
+
+    static final String ST_UPDATE_STOCK_C = 
+    "UPDATE LotContenant SET QuantiteDisponibleC = QuantiteDisponibleC - ? " +
+    "WHERE idContenant = ? AND DateReceptionC = ?";
+
+    static final String ACCES_ADRESSE = 
+    """
+        SELECT count(adresselivraison)
+        FROM adresselivraison
+        WHERE adresselivraison = ?
+    """;
+
     
     //static private String DATESQL = "TO_DATE(?, 'YYYY-MM-DD')";
 
@@ -392,19 +408,38 @@ public class StatementCommande{
     public void ajouteNovAdresse(String adresseClient,String emailClient) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
-        stmt.setString(1,adresseClient);
+
+        PreparedStatement checkStmt = conn.prepareStatement(ACCES_ADRESSE);
+                
+        // stmt.setString(1,adresseClient);
         stmt2.setString(1,emailClient);
-        stmt2.setString(2, adresseClient);
-        int nbAjout = stmt.executeUpdate();
-        int nbAjout2 = stmt2.executeUpdate();
-        if (nbAjout2 + nbAjout == 2){
-            System.out.println("L'adresse a bien été ajoutée ");
-        }else{
-            System.out.println("Echec de l'ajout");
+        // stmt2.setString(2, adresseClient);
+
+    try {
+        // 2. Vérifier si l'adresse existe déjà
+        checkStmt.setString(1, adresseClient);
+        ResultSet rs = checkStmt.executeQuery(); // On exécute le SELECT
+        rs.next(); // On se positionne sur la première ligne de résultat
+        int count = rs.getInt(1); // On récupère le résultat du COUNT(*)
+        rs.close();
+
+
+        // 3. Si l'adresse n'existe pas, on l'ajoute
+        if (count == 0) {
+            stmt.executeUpdate();
+            System.out.println("Nouvelle adresse créée dans le système.");
+        } else {
+            System.out.println("L'adresse existe déjà, on lie simplement le client.");
         }
+
+        stmt2.setString(2, adresseClient);
+        stmt2.executeUpdate();
+    } finally {        
+        checkStmt.close();
         stmt.close();
-        stmt2.close();
+        stmt2.close();}
     }
+
     public ArrayList<String> getAdresseClient(int idClient){
     // Retourne les adressesLivraison d'un client à partir de son idClient
     try{
@@ -500,24 +535,43 @@ public class StatementCommande{
         stmt.setString(4, dateparam);
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
-        while(quantiteP > 0){
-            rset.next();
-            argsCommandeP[0]++;
-            double qtedispo = rset.getDouble(3);
-            double prix = rset.getDouble(1);
 
-            java.sql.Date sqlDate = rset.getDate(2);
-            String date = sdf.format(sqlDate);
+        try (PreparedStatement updateStmt = conn.prepareStatement(ST_UPDATE_STOCK_P)) {
+            while(quantiteP > 0 && rset.next()){
+                // rset.next();
+                argsCommandeP[0]++;
+                double qtedispo = rset.getDouble(3);
+                double prix = rset.getDouble(1);
+                java.sql.Date dateReception = rset.getDate(2);
 
+                java.sql.Date sqlDate = rset.getDate(2);
+                String date = sdf.format(sqlDate);
+
+                
+                System.out.println(date);
+                double quantite = Math.min(quantiteP,qtedispo);
+                double sousTotal = quantite*prix;
+                double[] argsDouble = {quantite,prix,sousTotal};
+                
+                ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, date,PoidsUnitaire);
+                
+
+                updateStmt.setDouble(1, quantite);
+                updateStmt.setInt(2, argsCommandeP[2]);
+                updateStmt.setString(3, ModeConditionnement);
+                updateStmt.setDouble(4, PoidsUnitaire);
+                updateStmt.setDate(5, dateReception);
             
-            System.out.println(date);
-            double quantite = Math.min(quantiteP,qtedispo);
-            double sousTotal = quantite*prix;
-            double[] argsDouble = {quantite,prix,sousTotal};
-            ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, date,PoidsUnitaire);
-            prixTotal += sousTotal;
-            quantiteP -= qtedispo;
+                int rowsAffected = updateStmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new SQLException("Erreur critique : Le lot Produit a disparu ou le stock est insuffisant pendant la transaction.");
+                }
+
+                prixTotal += sousTotal;
+                quantiteP -= qtedispo;
+            }
         }
+
         rset.close();
         stmt.close();
         return prixTotal;
@@ -529,19 +583,35 @@ public class StatementCommande{
         double prixTotal = 0;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-        while(quantiteC > 0){
-            rset.next();
-            argsCommandeC[0]++;
-            int qtedispo = rset.getInt(2);
-            double prix = rset.getDouble(3);
-            java.sql.Date sqlDate = rset.getDate(1);
-            String date = sdf.format(sqlDate);
-            double sousTotal = quantiteC*prix;
-            int quantite = Math.min(quantiteC,qtedispo);
-            double[] argsDouble = {prix,sousTotal};
-            ajouteCommandeC(argsCommandeC,argsDouble,date,quantite);
-            prixTotal += sousTotal;
-            quantiteC -= qtedispo;
+        try (PreparedStatement updateStmt = conn.prepareStatement(ST_UPDATE_STOCK_C)) {
+            while(quantiteC > 0 && rset.next()){
+                // rset.next();
+                argsCommandeC[0]++;
+                int qtedispo = rset.getInt(2);
+                double prix = rset.getDouble(3);
+                
+                java.sql.Date sqlDate = rset.getDate(1);
+                String date = sdf.format(sqlDate);
+                double sousTotal = quantiteC*prix;
+                int quantite = Math.min(quantiteC,qtedispo);
+                double[] argsDouble = {prix,sousTotal};
+                ajouteCommandeC(argsCommandeC,argsDouble,date,quantite);
+                
+
+                java.sql.Date dateReception = rset.getDate(1);
+
+                updateStmt.setDouble(1, quantite);
+                updateStmt.setInt(2, argsCommandeC[2]);
+                updateStmt.setDate(3, dateReception);
+
+                int rowsAffected = updateStmt.executeUpdate();
+                if (rowsAffected ==0) {
+                    throw new SQLException("Le lot Contenant a disparu ou le stock est insuffisant pendant la transaction. ");
+                }
+
+                prixTotal += sousTotal;
+                quantiteC -= qtedispo;
+            }
         }
         rset.close();
         stmt.close();
