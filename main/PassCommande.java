@@ -282,11 +282,6 @@ public class PassCommande{
             for (ProduitPanier art : panierProduits) {
                 argsProd[2] = art.idProduit; // On met l'ID du produit courant
 
-                // C'est CETTE méthode qui va :
-                // 1. Vérifier le stock (SELECT FOR UPDATE)
-                // 2. Réduire le stock (UPDATE)
-                // 3. Insérer la ligne (INSERT)
-                // Si le stock manque, elle lance une SQLException et tout s'annule.
                 double prixLigne = statementcomm.ajouteCommandeGlobalP(
                     argsProd, 
                     art.modeConditionnement, 

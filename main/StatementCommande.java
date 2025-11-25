@@ -63,7 +63,7 @@ public class StatementCommande{
 
     static final String STCOMMBOUTIQUE = "INSERT INTO CommandeenBoutique VALUES(?,'En preparation')";
     
-    static final String STCOMMLIVRER = "INSERT INTO CommandaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?)";
+    static final String STCOMMLIVRER = "INSERT INTO CommandeaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?)";
     
     private Connection conn;
     
@@ -76,6 +76,7 @@ public class StatementCommande{
         // try{
         PreparedStatement stmt = conn.prepareStatement(STPrixProduit);
         stmt.setInt(1, idProduit);
+        stmt.setString(2, ModeConditionnement);
         ResultSet rset = stmt.executeQuery();
         rset.next();
         double prix = rset.getDouble(1);
@@ -368,13 +369,21 @@ public class StatementCommande{
       }
     } 
     public void ajouteNovClient(String[] argsClient,int idClient) throws SQLException{
+        String stAnonyme = "INSERT INTO ClientAnonyme VALUES (?)";
+        try (PreparedStatement stmtAnon = conn.prepareStatement(stAnonyme)) {
+            stmtAnon.setInt(1, idClient);
+            stmtAnon.executeUpdate();
+        }
+
         PreparedStatement stmt = conn.prepareStatement(STNvClient);
+        stmt.setString(1, argsClient[0]); // email
+        stmt.setString(2, argsClient[1]); // nom
+        stmt.setString(3, argsClient[2]); // prenom
+        stmt.setString(4, argsClient[3]); // telephone        
         stmt.setInt(5,idClient);
         int nbAjout = stmt.executeUpdate();
-        if (nbAjout == 2){
+        if (nbAjout == 1){
             System.out.println("Le client a bien été ajouté dans la base de données");
-        }else if (nbAjout == 1){
-            System.out.println("La creation de ClientAnonyme a echoué");
         } else{
             System.out.println("Echec de l'opération le client n'a pas été ajouté ");
         }
@@ -385,6 +394,7 @@ public class StatementCommande{
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
         stmt.setString(1,adresseClient);
         stmt2.setString(1,emailClient);
+        stmt2.setString(2, adresseClient);
         int nbAjout = stmt.executeUpdate();
         int nbAjout2 = stmt2.executeUpdate();
         if (nbAjout2 + nbAjout == 2){
@@ -447,9 +457,9 @@ public class StatementCommande{
         stmt.setString(4, argsLivraison[1]);
         int nbAjout = stmt.executeUpdate();
         if (nbAjout > 0){
-            System.out.println("La création de la CommandeLivrer a bien été réussie");
+            System.out.println("La création de la CommandeaLivrer a bien été réussie");
         }else{
-            System.out.println("Echec de la création de la CommandeLivrer");
+            System.out.println("Echec de la création de la CommandeaLivrer");
         }
         stmt.close();
     }
@@ -495,7 +505,11 @@ public class StatementCommande{
             argsCommandeP[0]++;
             double qtedispo = rset.getDouble(3);
             double prix = rset.getDouble(1);
-            String date = rset.getString(2);
+
+            java.sql.Date sqlDate = rset.getDate(2);
+            String date = sdf.format(sqlDate);
+
+            
             System.out.println(date);
             double quantite = Math.min(quantiteP,qtedispo);
             double sousTotal = quantite*prix;
@@ -513,12 +527,15 @@ public class StatementCommande{
         stmt.setInt(1,argsCommandeC[2]);
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
         while(quantiteC > 0){
             rset.next();
             argsCommandeC[0]++;
             int qtedispo = rset.getInt(2);
             double prix = rset.getDouble(3);
-            String date = rset.getString(1);
+            java.sql.Date sqlDate = rset.getDate(1);
+            String date = sdf.format(sqlDate);
             double sousTotal = quantiteC*prix;
             int quantite = Math.min(quantiteC,qtedispo);
             double[] argsDouble = {prix,sousTotal};
