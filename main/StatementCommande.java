@@ -84,6 +84,9 @@ public class StatementCommande{
     
     static final String STCOMMLIVRER = "INSERT INTO CommandeaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?)";
     
+    static final String ST_DELETE_LIGNE_P = "DELETE FROM LigneCommandeProduit WHERE idCommande = ?";
+    static final String ST_DELETE_LIGNE_C = "DELETE FROM LigneCommandeContenant WHERE idCommande = ?";
+    
     private Connection conn;
     
     public StatementCommande(Connection conn){
@@ -635,5 +638,23 @@ public class StatementCommande{
         rset.close();
         stmt.close();
         return prixTotal;
-    }           
+    }
+
+    public void supprimerLignesCommande(int idCommande) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(ST_DELETE_LIGNE_P)) {
+            ps.setInt(1, idCommande);
+            int rowsAffected = ps.executeUpdate();
+            System.out.println(rowsAffected + " lignes de produit supprimées pour la commande " + idCommande);
+        }
+    }
+
+
+    public void supprimerLignesContenant(int idCommande) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(ST_DELETE_LIGNE_C)) {
+            ps.setInt(1, idCommande);
+            int rowsAffected = ps.executeUpdate();
+            System.out.println(rowsAffected + " lignes de contenant supprimées pour la commande " + idCommande);
+        }
+    }
+
 }

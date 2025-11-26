@@ -20,7 +20,7 @@ public class PassCommande{
         this.statementcomm = new StatementCommande(conn);
         this.menu = menu;
         prixCommande = 0;
-        idCommande = statementcomm.nbIdCommade();
+        idCommande = statementcomm.nbIdCommade(); // ou + 1 ??
         panierProduits = new ArrayList<>();
         panierContenants = new ArrayList<>();
         System.out.println(" 1 : Commander un Produit ");
@@ -106,15 +106,30 @@ public class PassCommande{
             int numligneP = 0;
             int[] argsCommande = {numligneP,idCommande,idProduit};
             try{
-            // !!!!!!!!!!!!!!!!! il n'a pas payé ni fini sa commande
-            // double prix = statementcomm.ajouteCommandeGlobalP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
-            // System.out.println("Cette commande de ce produit vous couteta " + prix); 
-                panierProduits.add(new ProduitPanier(idProduit, ModeConditionnement, PoidsUnitaire, qte));
-                double prixEstime = statementcomm.calculePrixProduit(idProduit, qte, ModeConditionnement);
-                System.out.println("Produit ajouté au panier ! Coût estimé : " + prixEstime);
-                this.prixCommande += prixEstime;
+                // transaction pour une ligne de commande :
+                conn.setAutoCommit(false);
+                double prixLigne = statementcomm.ajouteCommandeGlobalP(
+                    argsCommande,
+                    ModeConditionnement,
+                    qte,
+                    PoidsUnitaire
+                );
+                conn.commit();
+                System.out.println("Produit ajouté au panier ! Coût estimé : " + prixLigne);
+                this.prixCommande += prixLigne;
             } catch (SQLException e) {
-                System.out.println("Erreur lors de l'ajout du produit à la commande." + e.getMessage());
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+                System.out.println("Erreur lors de l'ajout du produit à la commande: " + e.getMessage());
+            } finally {
+                try {
+                    conn.setAutoCommit(true); // remise en mode auto-commit
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
         System.out.println(" 1 : Recommander un Produit ");
@@ -132,6 +147,7 @@ public class PassCommande{
         if (!(statementcomm.verfieIdContenant(idContenant))){
             System.out.println("L'idContenant est faux");
             commandeProduit();
+            return;
         }
         System.out.println(" Entrer la quantité souhaitée : ");
         int qte = scan.nextInt();
@@ -152,11 +168,27 @@ public class PassCommande{
                 // double prix = statementcomm.ajouteCommandeGlobalC(argsCommandeC, qte);
                 // this.prixCommande += prix;
                 // System.out.println("Cette commande de ce contenat vous couteta " + prix); 
-                panierContenants.add(new ContenantPanier(idContenant, qte));
-                double prixEstime = statementcomm.calculePrixContenant(idContenant, qte);
-                System.out.println("Contenant ajouté au panier ! Coût estimé : " + prixEstime);
+                conn.setAutoCommit(false);
+                double prixLigne = statementcomm.ajouteCommandeGlobalC(
+                    argsCommandeC, 
+                    qte
+                );
+                conn.commit(); // COMMIT valide la ligne et la mise à jour du stock
+                System.out.println("Contenant ajouté au panier ! Coût estimé : " + prixLigne);
+                this.prixCommande += prixLigne;
             } catch (SQLException e) {
-                System.out.println("Erreur lors de l'ajout du contenant à la commande." + e.getMessage());
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+                System.out.println("Erreur lors de l'ajout du contenant à la commande: " + e.getMessage());
+            } finally {
+                try {
+                    conn.setAutoCommit(true); // remise en mode auto-commit
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
             } else{
             System.out.println("1 : Commander un Produit ");
@@ -316,13 +348,15 @@ public class PassCommande{
             System.out.println("Coût total : " + this.prixCommande);
             panierProduits.clear();
             panierContenants.clear();
-            this.prixCommande = 0;
+
 
         } catch (SQLException e) {
             System.out.println("Erreur lors du démarrage de la transaction : " + e.getMessage());
             try {
             System.out.println(" Annulation de la transaction (Rollback)...");
             conn.rollback(); // le client, l'adresse et la commande ne seront pas créés.
+            System.out.println(" Annulation des lignes de commande déjà enregistrées...");
+            annuleCommande();
             } catch (SQLException ex) {
             ex.printStackTrace();
             } 
@@ -334,7 +368,9 @@ public class PassCommande{
             }
             System.out.println("\nRetour au menu principal...");
             try { Thread.sleep(1000); } catch (InterruptedException ie) {}
-            System.err.println("La commande globale vous coutera " + this.prixCommande);
+            double prixCommandeFinal = this.prixCommande; // stocker le prix avant de le réinitialiser 
+            this.prixCommande = 0;
+            System.err.println("La commande globale vous coutera " + prixCommandeFinal);
             System.out.println(" 1 : Commander un Produit ");
             System.out.println(" 2 : Commander un Contenant");
             System.out.println(" 3 : Annuler la commande ");
@@ -345,8 +381,27 @@ public class PassCommande{
     }
     public void annuleCommande(){
         try {
-            conn.rollback();
+            conn.setAutoCommit(false);
+
+            statementcomm.supprimerLignesCommande(idCommande);
+            statementcomm.supprimerLignesContenant(idCommande); 
+
+            conn.commit();
+            System.out.println("Commande annulée. Toutes les lignes ont été supprimées et le stock a été restauré.");
+            this.prixCommande = 0;
         } catch (SQLException e) {
+             try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            System.err.println("Erreur lors de l'annulation de la commande : " + e.getMessage());
+        } finally {
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
     

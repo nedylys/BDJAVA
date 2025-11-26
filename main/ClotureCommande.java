@@ -15,7 +15,28 @@ public class ClotureCommande {
     public void cloturerCommande() {
         System.out.println("\n=== Clôture d'une commande ===");
         try {
+            connection.rollback();
             Scanner scanner = new Scanner(System.in);
+            // String requete1 = "SELECT * FROM commande";
+            // PreparedStatement commandes = connection.prepareStatement(requete1);
+            // ResultSet rs = commandes.executeQuery();
+
+            // boolean vide = true;
+            // System.out.println("\n===== Commandes =====");
+
+            // while (rs.next()) {
+            //     vide = false;
+            //     System.out.println("ID commande       : " + rs.getInt("idCommande"));
+            //     System.out.println("ID client         : " + rs.getInt("idClient"));
+            //     System.out.println("Mode récupération : " + rs.getString("ModeRecuperation"));
+            //     System.out.println("------------------------------");
+            // }
+
+            // if (vide) {
+            //     System.out.println("Aucune commande trouvée.");
+            // }
+
+
 
             System.out.print("ID commande : ");
             int id = Integer.parseInt(scanner.nextLine());
@@ -38,41 +59,135 @@ public class ClotureCommande {
             String statut ; 
             String requete ; 
             if ( modeRecup.equals("Retrait") ) {
-                requete = "insert into commandeEnboutique (idCommande, StatutCommandeB) values (?,?) " ; 
+                requete = "Update Commandeenboutique set StatutCommandeB = ? where idCommande = ? " ; 
                 statut = "Prete" ;
                 PreparedStatement psRetrait = connection.prepareStatement(requete);
-                psRetrait.setInt(1, id);
-                psRetrait.setString(2, statut);
+                psRetrait.setString(1, statut);
+                psRetrait.setInt(2, id);
                 psRetrait.executeUpdate();
             } else if( modeRecup.equals("Livraison") ) {
                 
                 statut = "En livraison" ;
-                System.out.print("Adresse de livraison : ");
-                String adresseLivraison = scanner.nextLine();
                 System.out.print("Distance de livraison (en km) : ");
                 int distance = Integer.parseInt(scanner.nextLine());
-                int Pays = 1;
-                int FraisLivraison = (distance < 10) ? 5 : (10 + 10*((int)distance/100) + Pays);
+                int FraisLivraison = (distance < 10) ? 5 : (10 + 10*((int)distance/100));
                 System.out.print("Date estimée de livraison (YYYY-MM-DD) : ");
                 String dateEstime = scanner.nextLine();
-                requete = " Insert into CommandeaLivrer (idCommande, StatutcommandeL, FraisLivraison, DateLivraisonEstimee, adresseLivraison) values (?,?,?,?,?) " ;
+                System.out.print("Adresse de livraison : Votre adresse Principale ? (true / false  ) ");
+                boolean adressePrincipale = Boolean.parseBoolean(scanner.nextLine());
+                if (!adressePrincipale){
+                    System.out.print("Renseignez l'adresse de livraison : ");
+                    String adresseLivraison = scanner.nextLine();
+                    String requeteAdresse = " Update CommandeaLivrer set adresseLivraison = ? where idCommande = ? " ;
+                    PreparedStatement psAdresse = connection.prepareStatement(requeteAdresse);
+                    psAdresse.setString(1, adresseLivraison);
+                    psAdresse.setInt(2, id);
+                    psAdresse.executeUpdate();
+                }
+                requete = " Update CommandeaLivrer set StatutCommandeL = ? , FraisLivraison = ? , DateLivraisonEstimee = TO_DATE(?, 'YYYY-MM-DD') where idCommande = ? " ;
                 PreparedStatement psLivraison = connection.prepareStatement(requete);
-                psLivraison.setInt(1, id);
-                psLivraison.setString(2, statut);
-                psLivraison.setInt(3, FraisLivraison);
-                psLivraison.setDate(4, Date.valueOf(dateEstime));
-                psLivraison.setString(5, adresseLivraison);
+                psLivraison.setString(1, statut);
+                psLivraison.setInt(2, FraisLivraison);
+                psLivraison.setDate(3, Date.valueOf(dateEstime));
+                psLivraison.setInt(4, id);
                 psLivraison.executeUpdate();   
             }
+            System.out.print(
+            " === La commande est en cours de clôture : \n "+
+            " === Tapez 0 pour retour \n " +
+            " === Valider l'achat : R = Récupérée, L = Livrée, A = Annulée .\n");
+            String key = scanner.nextLine().trim().toUpperCase();
+
+            if (key.equals("R")) {
+                String req = "UPDATE Commandeenboutique SET StatutCommandeB = ? WHERE idCommande = ?";
+                PreparedStatement ps = connection.prepareStatement(req);
+                ps.setString(1, "Recuperee");
+                ps.setInt(2, id);
+                ps.executeUpdate();
+
+                System.out.println("Commande marquée comme Récupérée !");
+
+
+                
+            }
+
+            else if  (key.equals("L")) {
+                String req = "UPDATE CommandeaLivrer SET StatutCommandeL = ? WHERE idCommande = ?";
+                PreparedStatement ps = connection.prepareStatement(req);
+                ps.setString(1, "Livree");
+                ps.setInt(2, id);
+                ps.executeUpdate();
+
+                System.out.println("Commande marquée comme Livrée !");
+
+            }
+
+            else if (key.equals("A")) {
+                String req1 = "UPDATE Commandeenboutique SET StatutCommandeB = ? WHERE idCommande = ?";
+                String req2 = "UPDATE CommandeaLivrer SET StatutCommandeL = ? WHERE idCommande = ?";
+
+                PreparedStatement ps1 = connection.prepareStatement(req1);
+                ps1.setString(1, "Annulée");
+                ps1.setInt(2, id);
+                ps1.executeUpdate();
+
+                PreparedStatement ps2 = connection.prepareStatement(req2);
+                ps2.setString(1, "Annulée");
+                ps2.setInt(2, id);
+                ps2.executeUpdate();
+
+                System.out.println("Commande annulée !");
+                retour();
+                return;
+            }
+            else if ( key.equals("0") ) {
+                retour();
+                return ;    }
+            else {
+                System.out.println("Choix invalide. La commande n'a pas été clôturée.");
+                retour();
+                return; }
+            String depiterStockp = "UPDATE LotProduit " + 
+                            "            SET QuantiteDisponibleP = QuantiteDisponibleP - ( " + 
+                            "                SELECT QuantiteCommandeeP " + 
+                            "                FROM LigneCommandeProduit" + 
+                            "                WHERE idCommande = ?" + 
+                            "                  AND LigneCommandeProduit.idProduit = LotProduit.idProduit  " + //
+                            "                  AND LigneCommandeProduit.DateReceptionP = LotProduit.DateReceptionP  " + //
+                            "                  AND LigneCommandeProduit.ModeConditionnement = LotProduit.ModeConditionnement  " + //
+                            "                  AND LigneCommandeProduit.PoidsUnitaire = LotProduit.PoidsUnitaire " + //
+                            "            )";
+            String depiterStockc = "UPDATE LotContenant " + 
+                            "            SET QuantiteDisponibleC = QuantiteDisponibleC - (  " + 
+                            "                SELECT QuantiteCommandeeC " + 
+                            "                FROM LigneCommandeContenant " + 
+                            "                WHERE idCommande = ? " + 
+                            "                  AND LigneCommandeContenant.idContenant = LotContenant.idContenant  " + //
+                            "                  AND LigneCommandeContenant.DateReceptionC = LotContenant.DateReceptionC  " + //
+                            "            )" ;
+            PreparedStatement psDepiterP = connection.prepareStatement(depiterStockp)   ;
+            PreparedStatement psDepiterC = connection.prepareStatement(depiterStockc)   ;
+            psDepiterP.setInt(1, id)  ;
+            psDepiterC.setInt(1, id)  ;
+            psDepiterP.executeUpdate()  ;
+            psDepiterC.executeUpdate()  ;
+            connection.commit()  ;
+
+        
+            
         }    
         catch (SQLException e) {
             System.out.println("Erreur lors de la clôture de la commande : " + e.getMessage());
             retour();
             return;
         }
+       
+        
         System.out.println("Commande clôturée avec succès !");
+        
         retour();
     }
+
 
             
         
