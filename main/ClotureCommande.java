@@ -15,6 +15,7 @@ public class ClotureCommande {
     public void cloturerCommande() {
         System.out.println("\n=== Clôture d'une commande ===");
         try {
+            connection.rollback();
             Scanner scanner = new Scanner(System.in);
             // String requete1 = "SELECT * FROM commande";
             // PreparedStatement commandes = connection.prepareStatement(requete1);
@@ -105,6 +106,8 @@ public class ClotureCommande {
                 ps.executeUpdate();
 
                 System.out.println("Commande marquée comme Récupérée !");
+
+
                 
             }
 
@@ -144,6 +147,31 @@ public class ClotureCommande {
                 System.out.println("Choix invalide. La commande n'a pas été clôturée.");
                 retour();
                 return; }
+            String depiterStockp = "UPDATE LotProduit " + 
+                            "            SET QuantiteDisponibleP = QuantiteDisponibleP - ( " + 
+                            "                SELECT QuantiteCommandeeP " + 
+                            "                FROM LigneCommandeProduit" + 
+                            "                WHERE idCommande = ?" + 
+                            "                  AND LigneCommandeProduit.idProduit = LotProduit.idProduit  " + //
+                            "                  AND LigneCommandeProduit.DateReceptionP = LotProduit.DateReceptionP  " + //
+                            "                  AND LigneCommandeProduit.ModeConditionnement = LotProduit.ModeConditionnement  " + //
+                            "                  AND LigneCommandeProduit.PoidsUnitaire = LotProduit.PoidsUnitaire " + //
+                            "            )";
+            String depiterStockc = "UPDATE LotContenant " + 
+                            "            SET QuantiteDisponibleC = QuantiteDisponibleC - (  " + 
+                            "                SELECT QuantiteCommandeeC " + 
+                            "                FROM LigneCommandeContenant " + 
+                            "                WHERE idCommande = ? " + 
+                            "                  AND LigneCommandeContenant.idContenant = LotContenant.idContenant  " + //
+                            "                  AND LigneCommandeContenant.DateReceptionC = LotContenant.DateReceptionC  " + //
+                            "            )" ;
+            PreparedStatement psDepiterP = connection.prepareStatement(depiterStockp)   ;
+            PreparedStatement psDepiterC = connection.prepareStatement(depiterStockc)   ;
+            psDepiterP.setInt(1, id)  ;
+            psDepiterC.setInt(1, id)  ;
+            psDepiterP.executeUpdate()  ;
+            psDepiterC.executeUpdate()  ;
+            connection.commit()  ;
 
         
             
@@ -156,6 +184,7 @@ public class ClotureCommande {
        
         
         System.out.println("Commande clôturée avec succès !");
+        
         retour();
     }
 
