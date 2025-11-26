@@ -25,10 +25,9 @@ public class PassCommande{
         panierContenants = new ArrayList<>();
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
-        System.out.println(" 3 : Annuler la commande ");
-        System.out.println(" 4 : Finaliser la commande ");
+        System.out.println(" 3 : Annuler une commande ");
+        System.out.println(" 4 : Finaliser une commande ");
         System.out.println(" 5 : Retour au menu prinicpal");
-        System.out.println("Taper le numéro choisi:");
     }
     public void beginCommande(){
         int numchoisi = scan.nextInt();
@@ -48,6 +47,9 @@ public class PassCommande{
         }
     }
     public void commandeProduit(){
+        ///
+        menu.afficherProduits(scan, idCommande);
+        /// 
         System.out.println("Entrer l'idProduit : ");
         int idProduit = scan.nextInt();
         scan.nextLine();
