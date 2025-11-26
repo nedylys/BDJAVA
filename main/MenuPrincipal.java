@@ -144,7 +144,9 @@ public class MenuPrincipal {
             } catch (Exception e) {
                 System.out.println("[!] Impossible de clear le terminal");
             }
-            System.out.println("\n ==================================== Espace commande à passer ====================================");
+            System.out.println("\n                                     =============================                                     ");
+            System.out.println("\n ==================================== 📦 Espace commande à passer ====================================");
+            System.out.println("\n                                     =============================                                     ");
 
             PassCommande commande = new PassCommande(connection,scanner,this);
             commande.beginCommande();
