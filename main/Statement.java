@@ -7,6 +7,23 @@ public class Statement{
                 where l.idproduit = p.idproduit
                 group by (l.idproduit, p.nomproduit, l.modeconditionnement, p.descriptionproduit, p.categorieproduit, poidsUnitaire)
                 """;
+    static final String PRE_STMT_COMMANDE = """
+                SELECT l.idproduit,
+                    p.IDPRODUCTEUR,
+                    l.modeconditionnement,
+                    p.nomproduit,
+                    p.categorieproduit,
+                    l.poidsUnitaire,
+                    SUM(l.quantitedisponiblep) AS QuantiteDisponible
+                FROM lotproduit l
+                JOIN produit p ON l.idproduit = p.idproduit
+                GROUP BY l.idproduit,
+                        p.IDPRODUCTEUR,
+                        l.modeconditionnement,
+                        p.nomproduit,
+                        p.categorieproduit,
+                        l.poidsUnitaire
+            """;
 
     static final String ALERTES_PRE = """
         SELECT  
