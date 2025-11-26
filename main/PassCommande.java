@@ -56,17 +56,19 @@ public class PassCommande{
         }
         System.err.println("Modes de Conditionnement disponibles : ");
         statementcomm.getModeConditionnement(idProduit);
-        System.out.println("Entrer le Mode de Conditionnement : ");
+        System.out.println("Entrer le Mode de Conditionnement (v ou p) : ");
         String ModeConditionnement = scan.nextLine();
         double PoidsUnitaire;
-        while (!(ModeConditionnement.equals("vrac")) && !(ModeConditionnement.equals("preconditionne"))){
+        while (!(ModeConditionnement.equals("v")) && !(ModeConditionnement.equals("p"))){
             System.out.println("Mauvaise saisie ");
             System.out.println("Entrer le Mode de Conditionnement : ");
             ModeConditionnement = scan.nextLine();
         }
-        if (ModeConditionnement.equals("vrac")){
+        if (ModeConditionnement.equals("v")){
+            ModeConditionnement = "vrac";
             PoidsUnitaire = 1.0;
         }else{
+            ModeConditionnement = "preconditionne";
             System.out.println("Les poidsUnitaire disponibles : ");
             statementcomm.choisirPoidsUnitaire(idProduit);
             System.out.println("Entrer le poids unitaire : ");
@@ -224,7 +226,7 @@ public class PassCommande{
                adresse = scan.nextLine();
             //    statementcomm.ajouteNovAdresse(adresse, emailClient);
             } else{
-                ArrayList<String> adresseArray = statementcomm.getAdresseClient(idClient);
+                ArrayList<String> adresseArray = statementcomm.getAdresseClient(emailClient);
                 if(adresseArray != null && !adresseArray.isEmpty()) {
                     System.out.println("Choisissez l'adresse de livraison (numéro) : ");
                     int numchoisi = scan.nextInt();

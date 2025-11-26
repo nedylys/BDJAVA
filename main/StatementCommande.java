@@ -35,7 +35,7 @@ public class StatementCommande{
     
     static final String STNVADRESSE = " INSERT INTO AdresseLivraison VALUES(?) ";
 
-    static final String STGETADRESS = "select AdresseLivraison from ClientAPourAdresseLivraison where idClient = ?";
+    static final String STGETADRESS = "select AdresseLivraison from ClientAPourAdresseLivraison where emailClient = ?";
 
     static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme ";
 
@@ -72,6 +72,9 @@ public class StatementCommande{
         WHERE adresselivraison = ?
     """;
 
+    static final String ST_LIEN_EXISTE =  """ 
+    SELECT 1 FROM ClientAPourAdresseLivraison WHERE emailClient = ? AND AdresseLivraison = ?
+    """;
     
     //static private String DATESQL = "TO_DATE(?, 'YYYY-MM-DD')";
 
@@ -406,19 +409,19 @@ public class StatementCommande{
     public void ajouteNovAdresse(String adresseClient,String emailClient) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
-
-        PreparedStatement checkStmt = conn.prepareStatement(ACCES_ADRESSE);
+        PreparedStatement checkLienStmt = conn.prepareStatement(ST_LIEN_EXISTE);
+        PreparedStatement checkAddrStmt = conn.prepareStatement(ACCES_ADRESSE);
                 
         // stmt.setString(1,adresseClient);
         stmt2.setString(1,emailClient);
         // stmt2.setString(2, adresseClient);
 
     try {
-        // 2. Vérifier si l'adresse existe déjà
-        checkStmt.setString(1, adresseClient);
-        ResultSet rs = checkStmt.executeQuery(); // On exécute le SELECT
-        rs.next(); // On se positionne sur la première ligne de résultat
-        int count = rs.getInt(1); // On récupère le résultat du COUNT(*)
+
+        checkAddrStmt.setString(1, adresseClient);
+        ResultSet rs = checkAddrStmt.executeQuery();
+        rs.next();
+        int count = rs.getInt(1);
         rs.close();
 
 
@@ -431,19 +434,36 @@ public class StatementCommande{
             System.out.println("L'adresse existe déjà, on lie simplement le client.");
         }
 
-        stmt2.setString(2, adresseClient);
-        stmt2.executeUpdate();
+        checkLienStmt.setString(1, emailClient);
+        checkLienStmt.setString(2, adresseClient);
+
+        ResultSet rsLien = checkLienStmt.executeQuery();
+        
+        boolean lienExiste = rsLien.next();
+        rsLien.close();
+        
+        if (!lienExiste) {
+            stmt2.setString(1, emailClient);
+            stmt2.setString(2, adresseClient);
+            stmt2.executeUpdate();
+            System.out.println("Lien client-adresse ajouté la base de donnÃ©es.");
+        } else {
+            System.out.println("Lien client-adresse déjà  existant (contrainte unique respectÃ©e)."); 
+        }
+
     } finally {        
-        checkStmt.close();
+        checkAddrStmt.close();
+        checkLienStmt.close();
         stmt.close();
-        stmt2.close();}
+        stmt2.close();
+    }
     }
 
-    public ArrayList<String> getAdresseClient(int idClient){
+    public ArrayList<String> getAdresseClient(String emailClient){
     // Retourne les adressesLivraison d'un client à partir de son idClient
     try{
         PreparedStatement stmt = conn.prepareStatement(STGETADRESS);
-        stmt.setInt(1,idClient);
+        stmt.setString(1,emailClient);
         ResultSet rst = stmt.executeQuery();
         int iAdresse = 0;
         ArrayList<String> adresseArray = new ArrayList<>(); 
