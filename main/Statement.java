@@ -18,11 +18,11 @@ public class Statement{
             CEIL(l.DatePeremption - SYSDATE) AS jours_restants,
             l.PRIXVENTEPTTC AS Prix_actuel_euros,
             (l.PRIXVENTEPTTC / (0.7)) AS Prix_Vente_TTC_initiale,
-            l.REMISE_APPLIQUEEs
+            l.REMISE_APPLIQUEE
 
         FROM Produit p
         JOIN LotProduit l ON l.IdProduit = p.IdProduit
-        WHERE (l.DatePeremption - SYSDATE) <= 365
+        WHERE (l.DatePeremption - SYSDATE) <= 7
           AND CEIL(l.DatePeremption - SYSDATE) >= 0
         ORDER BY jours_restants ASC
     """;

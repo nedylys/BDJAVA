@@ -198,11 +198,9 @@ public class StatementCommande{
             stmt.setInt(1, idProduit);
             ResultSet rset = stmt.executeQuery();
             ArrayList<Double> listePoids = new ArrayList<>();
-            int iPoids = 0; 
             while (rset.next()){
-                iPoids++;
                 double poids = rset.getDouble(1);
-                System.out.println(iPoids + ". " + poids);
+                System.out.println(poids);
             }
             rset.close();
             stmt.close();
@@ -426,6 +424,7 @@ public class StatementCommande{
 
         // 3. Si l'adresse n'existe pas, on l'ajoute
         if (count == 0) {
+            stmt.setString(1, adresseClient);
             stmt.executeUpdate();
             System.out.println("Nouvelle adresse créée dans le système.");
         } else {

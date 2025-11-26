@@ -108,6 +108,7 @@ public class PassCommande{
                 panierProduits.add(new ProduitPanier(idProduit, ModeConditionnement, PoidsUnitaire, qte));
                 double prixEstime = statementcomm.calculePrixProduit(idProduit, qte, ModeConditionnement);
                 System.out.println("Produit ajouté au panier ! Coût estimé : " + prixEstime);
+                this.prixCommande += prixEstime;
             } catch (SQLException e) {
                 System.out.println("Erreur lors de l'ajout du produit à la commande." + e.getMessage());
             }
@@ -344,6 +345,7 @@ public class PassCommande{
         } catch (SQLException e) {
         }
     }
+    
     public void retour(){
         menu.afficherMenu();
     }
