@@ -15,42 +15,64 @@ public class ClotureCommande {
     public void cloturerCommande() {
         System.out.println("\n=== Clôture d'une commande ===");
         try {
-            connection.rollback();
             Scanner scanner = new Scanner(System.in);
-            // String requete1 = "SELECT * FROM commande";
-            // PreparedStatement commandes = connection.prepareStatement(requete1);
-            // ResultSet rs = commandes.executeQuery();
+            System.out.print("Voulez-vous afficher la liste des commandes en cours ? (1 = Oui / 0 = Non) : ");
+            int choix = Integer.parseInt(scanner.nextLine());
 
-            // boolean vide = true;
-            // System.out.println("\n===== Commandes =====");
+            if (choix == 1) {
+                String requete1 ="SELECT DISTINCT c.idCommande, c.idClient, c.ModeRecuperation " +
+                                "FROM commande c, commandeenboutique, commandealivrer " +
+                                "WHERE (c.idCommande = commandeenboutique.idCommande " +
+                                "       OR c.idCommande = commandealivrer.idCommande) " + 
+                                "  AND (commandeenboutique.statutcommandeb != 'Recuperee' " +
+                                "       AND commandeenboutique.statutcommandeb != 'Annulée' " +
+                                "       AND commandealivrer.statutcommandel != 'Livree' " +
+                                "       AND commandealivrer.statutcommandel != 'Annulée')";
+            PreparedStatement commandes = connection.prepareStatement(requete1);
+            ResultSet rs = commandes.executeQuery();
 
-            // while (rs.next()) {
-            //     vide = false;
-            //     System.out.println("ID commande       : " + rs.getInt("idCommande"));
-            //     System.out.println("ID client         : " + rs.getInt("idClient"));
-            //     System.out.println("Mode récupération : " + rs.getString("ModeRecuperation"));
-            //     System.out.println("------------------------------");
-            // }
+            boolean vide = true;
+            System.out.println("\n===== Commandes =====");
 
-            // if (vide) {
-            //     System.out.println("Aucune commande trouvée.");
-            // }
+            while (rs.next()) {
+                vide = false;
+                System.out.println("ID commande       : " + rs.getInt("idCommande"));
+                System.out.println("ID client         : " + rs.getInt("idClient"));
+                System.out.println("Mode récupération : " + rs.getString("ModeRecuperation"));
+                System.out.println("------------------------------");
+            }
+
+            if (vide) {
+                System.out.println("Aucune commande trouvée.");
+            }
+                
+            }
+            else if ( choix != 1 ) {
+                System.out.println("Choix invalide.");
+                retour();
+                return ;
+            }
+
+           
 
 
-
+            System.out.println("\nEntrez l'ID de la commande à clôturer :\n");
             System.out.print("ID commande : ");
             int id = Integer.parseInt(scanner.nextLine());
 
-            System.out.print("Mode récupération (RETRAIT / LIVRAISON) : ");
-            String modeSaisi = scanner.nextLine().trim();
+            
 
             String modeRecup = "";
-            if (modeSaisi.equalsIgnoreCase("RETRAIT")) {
-                modeRecup = "Retrait";
-            } else if (modeSaisi.equalsIgnoreCase("LIVRAISON")) {
-                modeRecup = "Livraison";
+            PreparedStatement psMode = connection.prepareStatement(
+                "SELECT ModeRecuperation FROM Commande WHERE idCommande = ?"
+            );
+            psMode.setInt(1, id);
+            ResultSet rsMode = psMode.executeQuery();
+            if (rsMode.next()) {
+                modeRecup = rsMode.getString("ModeRecuperation");
             } else {
-                System.out.println("Mode de récupération invalide.");
+                connection.rollback();
+                System.out.println("Commande non trouvée.");
                 retour();
                 return;
             }
@@ -73,17 +95,6 @@ public class ClotureCommande {
                 int FraisLivraison = (distance < 10) ? 5 : (10 + 10*((int)distance/100));
                 System.out.print("Date estimée de livraison (YYYY-MM-DD) : ");
                 String dateEstime = scanner.nextLine();
-                System.out.print("Adresse de livraison : Votre adresse Principale ? (true / false  ) ");
-                boolean adressePrincipale = Boolean.parseBoolean(scanner.nextLine());
-                if (!adressePrincipale){
-                    System.out.print("Renseignez l'adresse de livraison : ");
-                    String adresseLivraison = scanner.nextLine();
-                    String requeteAdresse = " Update CommandeaLivrer set adresseLivraison = ? where idCommande = ? " ;
-                    PreparedStatement psAdresse = connection.prepareStatement(requeteAdresse);
-                    psAdresse.setString(1, adresseLivraison);
-                    psAdresse.setInt(2, id);
-                    psAdresse.executeUpdate();
-                }
                 requete = " Update CommandeaLivrer set StatutCommandeL = ? , FraisLivraison = ? , DateLivraisonEstimee = TO_DATE(?, 'YYYY-MM-DD') where idCommande = ? " ;
                 PreparedStatement psLivraison = connection.prepareStatement(requete);
                 psLivraison.setString(1, statut);
@@ -92,13 +103,18 @@ public class ClotureCommande {
                 psLivraison.setInt(4, id);
                 psLivraison.executeUpdate();   
             }
+            else {
+                System.out.println("Mode de récupération invalide.");
+                retour();
+                return ;
+            }
             System.out.print(
-            " === La commande est en cours de clôture : \n "+
-            " === Tapez 0 pour retour \n " +
-            " === Valider l'achat : R = Récupérée, L = Livrée, A = Annulée .\n");
+            "\n=== La commande est en cours de clôture : \n "+
+            "=== Tapez 0 pour retour \n " +
+            "=== Valider l'achat : V = validée, A = Annulée .\n");
             String key = scanner.nextLine().trim().toUpperCase();
 
-            if (key.equals("R")) {
+            if (key.equals("V") && modeRecup.equals("Retrait")) {
                 String req = "UPDATE Commandeenboutique SET StatutCommandeB = ? WHERE idCommande = ?";
                 PreparedStatement ps = connection.prepareStatement(req);
                 ps.setString(1, "Recuperee");
@@ -111,7 +127,7 @@ public class ClotureCommande {
                 
             }
 
-            else if  (key.equals("L")) {
+            else if  (key.equals("V") && modeRecup.equals("Livraison")) {
                 String req = "UPDATE CommandeaLivrer SET StatutCommandeL = ? WHERE idCommande = ?";
                 PreparedStatement ps = connection.prepareStatement(req);
                 ps.setString(1, "Livree");
@@ -144,6 +160,7 @@ public class ClotureCommande {
                 retour();
                 return ;    }
             else {
+                connection.rollback();
                 System.out.println("Choix invalide. La commande n'a pas été clôturée.");
                 retour();
                 return; }
@@ -189,15 +206,10 @@ public class ClotureCommande {
     }
 
 
-            
-        
-
-            
-            
 
     public void retour(){
         Scanner scanner = new Scanner(System.in);
-        System.out.println( " Taper 0 pour revenir au Menu principal");
+        System.out.println( "Taper 0 pour revenir au Menu principal");
         int choix = scanner.nextInt();
 
         switch (choix) {
