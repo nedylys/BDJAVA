@@ -43,7 +43,7 @@ public class StatementCommande{
 
     static final String STVERIFIEEMAILEXIST = "select * from Client where emailClient = ?";
 
-    static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme ";
+    static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme";
 
     static final String STNBIDCOMMANDE = "SELECT COUNT(*) FROM Commande";
 
@@ -303,13 +303,13 @@ public class StatementCommande{
             return 0;
       }
     }
-    public int nbIdCommade(){
+    public int nbIdCommande(){
     // Retourn le nb d'ID commande dans la base de données
         try{
         PreparedStatement stmt = conn.prepareStatement(STNBIDCOMMANDE);
         ResultSet rset = stmt.executeQuery();
         rset.next();
-        int nbCommande = rset.getInt(1);
+        int nbCommande = rset.getInt(1) + 7;
         rset.close();
         stmt.close();
         return nbCommande;

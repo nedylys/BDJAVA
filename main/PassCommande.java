@@ -20,7 +20,6 @@ public class PassCommande{
         this.statementcomm = new StatementCommande(conn);
         this.menu = menu;
         prixCommande = 0;
-        idCommande = statementcomm.nbIdCommade();
         this.panierCommandeC = new ArrayList<Commande>();
         this.panierCommandeP = new ArrayList<CommandeProduit>();
         System.out.println(" 1 : Commander un Produit ");
@@ -222,16 +221,19 @@ public class PassCommande{
             String dateLivraison = scan.nextLine();
             String[] argsLivraison = {dateLivraison,adresse};
             String [] argsCommande = {ModePaiement,ModeRecuperation};
+            idCommande = statementcomm.nbIdCommande();
             statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeLivrer(idCommande, fraisLivraison, argsLivraison);
         } else{
             ModeRecuperation = "Retrait en boutique";
             String [] argsCommande = {ModePaiement,ModeRecuperation};
+            idCommande = statementcomm.nbIdCommande();
             statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeBoutique(idCommande);
         }
         for (CommandeProduit commandeP : panierCommandeP){
              int[] argsCommandeP = commandeP.getArgsCommande();
+             argsCommandeP[0] = idCommande;
              double qteP = commandeP.getQte();
              String ModedeConditionnement = commandeP.getModeConditionnement();
              double PoidsUnitaire = commandeP.getPoidsUnitaire();
@@ -239,6 +241,7 @@ public class PassCommande{
         }
         for (Commande commandeC : panierCommandeC){
              int[] argsCommandeC = commandeC.getArgsCommande();
+             argsCommandeC[0] = idCommande;
              double qteC = commandeC.getQte();
              statementcomm.ajouteCommandeGlobalC(argsCommandeC,(int) qteC);
         }
@@ -264,5 +267,12 @@ public class PassCommande{
     }
     public void retour(){
         menu.afficherMenu();
+    }
+
+    private void afficherResumePanier() {
+        System.out.println("--- PANIER ACTUEL ---");
+        System.out.println(panierCommandeP.size() + " Produits | " + panierCommandeC.size() + " Contenants");
+        System.out.println("Total estimé : " + String.format("%.2f", prixCommande) );
+        System.out.println("---------------------");
     }
 }
