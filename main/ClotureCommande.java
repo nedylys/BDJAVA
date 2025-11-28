@@ -47,7 +47,7 @@ public class ClotureCommande {
             }
                 
             }
-            else if ( choix != 1 ) {
+            else if ( choix != 0 && choix != 1 ) {
                 System.out.println("Choix invalide.");
                 retour();
                 return ;
