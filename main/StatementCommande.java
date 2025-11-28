@@ -35,7 +35,7 @@ public class StatementCommande{
     
     static final String STNVADRESSE = " INSERT INTO AdresseLivraison VALUES(?) ";
 
-    static final String STGETADRESS = "select AdresseLivraison from ClientAPourAdresseLivraison where idClient = ?";
+    static final String STGETADRESS = "select AdresseLivraison from ClientAPourAdresseLivraison where emailClient = ?";
 
     static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme ";
 
@@ -440,11 +440,11 @@ public class StatementCommande{
         stmt2.close();}
     }
 
-    public ArrayList<String> getAdresseClient(int idClient){
+    public ArrayList<String> getAdresseClient(String emailClient){
     // Retourne les adressesLivraison d'un client à partir de son idClient
     try{
         PreparedStatement stmt = conn.prepareStatement(STGETADRESS);
-        stmt.setInt(1,idClient);
+        stmt.setString(1, emailClient);
         ResultSet rst = stmt.executeQuery();
         int iAdresse = 0;
         ArrayList<String> adresseArray = new ArrayList<>(); 

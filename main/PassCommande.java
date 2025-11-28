@@ -223,7 +223,7 @@ public class PassCommande{
                adresse = scan.nextLine();
             //    statementcomm.ajouteNovAdresse(adresse, emailClient);
             } else{
-                ArrayList<String> adresseArray = statementcomm.getAdresseClient(idClient);
+                ArrayList<String> adresseArray = statementcomm.getAdresseClient(emailClient);
                 if(adresseArray != null && !adresseArray.isEmpty()) {
                     System.out.println("Choisissez l'adresse de livraison (numéro) : ");
                     int numchoisi = scan.nextInt();
