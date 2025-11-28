@@ -72,6 +72,9 @@ public class StatementCommande{
         WHERE adresselivraison = ?
     """;
 
+    static final String ST_LIEN_EXISTE =  """ 
+    SELECT 1 FROM ClientAPourAdresseLivraison WHERE emailClient = ? AND AdresseLivraison = ?
+    """;
     
     //static private String DATESQL = "TO_DATE(?, 'YYYY-MM-DD')";
 
@@ -81,6 +84,9 @@ public class StatementCommande{
     
     static final String STCOMMLIVRER = "INSERT INTO CommandeaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?)";
     
+    static final String ST_DELETE_LIGNE_P = "DELETE FROM LigneCommandeProduit WHERE idCommande = ?";
+    static final String ST_DELETE_LIGNE_C = "DELETE FROM LigneCommandeContenant WHERE idCommande = ?";
+    
     private Connection conn;
     
     public StatementCommande(Connection conn){
@@ -88,7 +94,7 @@ public class StatementCommande{
     }
    
     public double calculePrixProduit(int idProduit, double quantite,String ModeConditionnement) throws SQLException{
-        // Retourne le prix d'une commande d'un produit
+        // Retourne le prix d'une commande d'un produit ELLE EST FAUSSE !!!!!!!!!!!!!!!!!
         // try{
         PreparedStatement stmt = conn.prepareStatement(STPrixProduit);
         stmt.setInt(1, idProduit);
@@ -107,7 +113,7 @@ public class StatementCommande{
     //   }
     }
     public double calculePrixContenant(int idContenant, int quantite) throws SQLException{
-        // Retourne le prix d'une commande d'un contenant
+        // Retourne le prix d'une commande d'un contenant ELLE EST FAUSSE !!!!!!!!!!!!!!!!!
         // try{
             PreparedStatement stmt = conn.prepareStatement(STPrixContenant);
             stmt.setInt(1, idContenant);
@@ -198,11 +204,9 @@ public class StatementCommande{
             stmt.setInt(1, idProduit);
             ResultSet rset = stmt.executeQuery();
             ArrayList<Double> listePoids = new ArrayList<>();
-            int iPoids = 0; 
             while (rset.next()){
-                iPoids++;
                 double poids = rset.getDouble(1);
-                System.out.println(iPoids + ". " + poids);
+                System.out.println(poids);
             }
             rset.close();
             stmt.close();
@@ -243,7 +247,6 @@ public class StatementCommande{
                 stmt.close();
                 return true;
             }else{
-                System.out.println("L'IdProduit est faux");
                 rset.close();
                 stmt.close();
                 return false;
@@ -408,43 +411,61 @@ public class StatementCommande{
     public void ajouteNovAdresse(String adresseClient,String emailClient) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
-
-        PreparedStatement checkStmt = conn.prepareStatement(ACCES_ADRESSE);
+        PreparedStatement checkLienStmt = conn.prepareStatement(ST_LIEN_EXISTE);
+        PreparedStatement checkAddrStmt = conn.prepareStatement(ACCES_ADRESSE);
                 
         // stmt.setString(1,adresseClient);
         stmt2.setString(1,emailClient);
         // stmt2.setString(2, adresseClient);
 
     try {
-        // 2. Vérifier si l'adresse existe déjà
-        checkStmt.setString(1, adresseClient);
-        ResultSet rs = checkStmt.executeQuery(); // On exécute le SELECT
-        rs.next(); // On se positionne sur la première ligne de résultat
-        int count = rs.getInt(1); // On récupère le résultat du COUNT(*)
+
+        checkAddrStmt.setString(1, adresseClient);
+        ResultSet rs = checkAddrStmt.executeQuery();
+        rs.next();
+        int count = rs.getInt(1);
         rs.close();
 
 
         // 3. Si l'adresse n'existe pas, on l'ajoute
         if (count == 0) {
+            stmt.setString(1, adresseClient);
             stmt.executeUpdate();
             System.out.println("Nouvelle adresse créée dans le système.");
         } else {
             System.out.println("L'adresse existe déjà, on lie simplement le client.");
         }
 
-        stmt2.setString(2, adresseClient);
-        stmt2.executeUpdate();
+        checkLienStmt.setString(1, emailClient);
+        checkLienStmt.setString(2, adresseClient);
+
+        ResultSet rsLien = checkLienStmt.executeQuery();
+        
+        boolean lienExiste = rsLien.next();
+        rsLien.close();
+        
+        if (!lienExiste) {
+            stmt2.setString(1, emailClient);
+            stmt2.setString(2, adresseClient);
+            stmt2.executeUpdate();
+            System.out.println("Lien client-adresse ajouté la base de donnÃ©es.");
+        } else {
+            System.out.println("Lien client-adresse déjà  existant (contrainte unique respectÃ©e)."); 
+        }
+
     } finally {        
-        checkStmt.close();
+        checkAddrStmt.close();
+        checkLienStmt.close();
         stmt.close();
-        stmt2.close();}
+        stmt2.close();
+    }
     }
 
     public ArrayList<String> getAdresseClient(String emailClient){
     // Retourne les adressesLivraison d'un client à partir de son idClient
     try{
         PreparedStatement stmt = conn.prepareStatement(STGETADRESS);
-        stmt.setString(1, emailClient);
+        stmt.setInt(1,idClient);
         ResultSet rst = stmt.executeQuery();
         int iAdresse = 0;
         ArrayList<String> adresseArray = new ArrayList<>(); 
@@ -524,7 +545,7 @@ public class StatementCommande{
         stmt.executeUpdate();
         stmt.close();
     }
-    public double ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire) throws SQLException{
+    public void ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STCARACTP);
         stmt.setInt(1,argsCommandeP[2]);
         stmt.setString(2, ModeConditionnement);
@@ -548,7 +569,7 @@ public class StatementCommande{
                 String date = sdf.format(sqlDate);
 
                 
-                System.out.println(date);
+
                 double quantite = Math.min(quantiteP,qtedispo);
                 double sousTotal = quantite*prix;
                 double[] argsDouble = {quantite,prix,sousTotal};
@@ -574,9 +595,8 @@ public class StatementCommande{
 
         rset.close();
         stmt.close();
-        return prixTotal;
     }
-    public double ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC) throws SQLException{
+    public void ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
         stmt.setInt(1,argsCommandeC[2]);
         ResultSet rset = stmt.executeQuery();
@@ -615,6 +635,115 @@ public class StatementCommande{
         }
         rset.close();
         stmt.close();
+    }
+    public double retournePrixCommandeC(int[] argsCommandeC,int quantiteC) throws SQLException{
+        PreparedStatement stmt = conn.prepareStatement(STCARACTC);
+        stmt.setInt(1,argsCommandeC[2]);
+        ResultSet rset = stmt.executeQuery();
+        double prixTotal = 0;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        try (PreparedStatement updateStmt = conn.prepareStatement(ST_UPDATE_STOCK_C)) {
+            while(quantiteC > 0 && rset.next()){
+                // rset.next();
+                argsCommandeC[0]++;
+                int qtedispo = rset.getInt(2);
+                double prix = rset.getDouble(3);
+                
+                java.sql.Date sqlDate = rset.getDate(1);
+                String date = sdf.format(sqlDate);
+                double sousTotal = quantiteC*prix;
+                int quantite = Math.min(quantiteC,qtedispo);
+                double[] argsDouble = {prix,sousTotal};
+                
+                
+
+                java.sql.Date dateReception = rset.getDate(1);
+
+                updateStmt.setDouble(1, quantite);
+                updateStmt.setInt(2, argsCommandeC[2]);
+                updateStmt.setDate(3, dateReception);
+
+                int rowsAffected = updateStmt.executeUpdate();
+                if (rowsAffected ==0) {
+                    throw new SQLException("Le lot Contenant a disparu ou le stock est insuffisant pendant la transaction. ");
+                }
+
+                prixTotal += sousTotal;
+                quantiteC -= qtedispo;
+            }
+        }
+        rset.close();
+        stmt.close();
         return prixTotal;
-    }           
+    }
+    public double retournePrixCommandeP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire) throws SQLException{
+        PreparedStatement stmt = conn.prepareStatement(STCARACTP);
+        stmt.setInt(1,argsCommandeP[2]);
+        stmt.setString(2, ModeConditionnement);
+        stmt.setDouble(3,PoidsUnitaire);
+        java.util.Date now = new java.util.Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dateparam = sdf.format(now);
+        stmt.setString(4, dateparam);
+        ResultSet rset = stmt.executeQuery();
+        double prixTotal = 0;
+
+        try (PreparedStatement updateStmt = conn.prepareStatement(ST_UPDATE_STOCK_P)) {
+            while(quantiteP > 0 && rset.next()){
+                // rset.next();
+                argsCommandeP[0]++;
+                double qtedispo = rset.getDouble(3);
+                double prix = rset.getDouble(1);
+                java.sql.Date dateReception = rset.getDate(2);
+
+                java.sql.Date sqlDate = rset.getDate(2);
+                String date = sdf.format(sqlDate);
+
+                
+                double quantite = Math.min(quantiteP,qtedispo);
+                double sousTotal = quantite*prix;
+                double[] argsDouble = {quantite,prix,sousTotal};
+                
+                
+                
+
+                updateStmt.setDouble(1, quantite);
+                updateStmt.setInt(2, argsCommandeP[2]);
+                updateStmt.setString(3, ModeConditionnement);
+                updateStmt.setDouble(4, PoidsUnitaire);
+                updateStmt.setDate(5, dateReception);
+            
+                int rowsAffected = updateStmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new SQLException("Erreur critique : Le lot Produit a disparu ou le stock est insuffisant pendant la transaction.");
+                }
+
+                prixTotal += sousTotal;
+                quantiteP -= qtedispo;
+            }
+        }
+
+        rset.close();
+        stmt.close();
+        return prixTotal;
+    }
+
+    public void supprimerLignesCommande(int idCommande) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(ST_DELETE_LIGNE_P)) {
+            ps.setInt(1, idCommande);
+            int rowsAffected = ps.executeUpdate();
+            System.out.println(rowsAffected + " lignes de produit supprimées pour la commande " + idCommande);
+        }
+    }
+
+
+    public void supprimerLignesContenant(int idCommande) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(ST_DELETE_LIGNE_C)) {
+            ps.setInt(1, idCommande);
+            int rowsAffected = ps.executeUpdate();
+            System.out.println(rowsAffected + " lignes de contenant supprimées pour la commande " + idCommande);
+        }
+    }
+
 }

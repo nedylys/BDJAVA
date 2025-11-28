@@ -48,6 +48,7 @@ public class ConnectionBase{
                     System.out.print("\n    🔁 Connecting to the database... ");
                     conn = DriverManager.getConnection(CONN_URL, USER, PASSWD);
                     System.out.println("🤝 Connected!");
+                    conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE); ///////// Niveau d'isolation des transactions
                     return conn;
                 } catch (SQLException e) {
                     System.err.println("❌ Échec de la connexion SQL");

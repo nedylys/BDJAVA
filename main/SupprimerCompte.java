@@ -14,7 +14,7 @@ public class SupprimerCompte {
     }
 
     public void supprimerCompte() {
-        String deleteQuery = "DELETE FROM Client WHERE emailClient = ?";
+        String deleteQuery = "DELETE FROM Client WHERE emailClient = ?"; // on delete cascade
         try (PreparedStatement ps = conn.prepareStatement(deleteQuery)) {
             ps.setString(1, emailClient);
             int rowsAffected = ps.executeUpdate();
