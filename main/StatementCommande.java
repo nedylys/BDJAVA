@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class StatementCommande{
-    static final String STDelai = "select DelaiDisponibilitéHeure from ProduitCommande where idProduit = ? ";
+    static final String STDelai = "select DelaiDisponibiliteHeure from ProduitCommande where idProduit = ? ";
     
     static final String STCommande = "select idProduit from ProduitCommande where idProduit = ? ";
     
@@ -19,7 +19,7 @@ public class StatementCommande{
 
     static final String STVERIFPOIDS = "select PoidsUnitaire from LotProduit where idProduit = ? and ModeConditionnement = 'preconditionne'"; 
 
-    static final String STQteStock = "select sum(PoidsUnitaire*QuantiteDisponibleP) from LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?";
+    static final String STQteStock = "select sum(PoidsUnitaire*QuantiteDisponibleP) from LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? and DatePeremption >= TO_DATE(?, 'YYYY-MM-DD')";
     
     static final String STQteContenant = "select sum(QuantiteDisponibleC) from LotContenant where idContenant = ?";
     
@@ -37,7 +37,11 @@ public class StatementCommande{
     
     static final String STNVADRESSE = " INSERT INTO AdresseLivraison VALUES(?) ";
 
-    static final String STGETADRESS = "select AdresseLivraison from ClientAPourAdresseLivraison where idClient = ?";
+    static final String STGETADRESS = "select AdresseLivraison from ClientAPourAdresseLivraison where emailClient = ?";
+
+    static final String STVERIFIEADRESSEXISTE = "select * from AdresseLivraison where AdresseLivraison = ?";
+
+    static final String STVERIFIEEMAILEXIST = "select * from Client where emailClient = ?";
 
     static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme ";
 
@@ -133,6 +137,8 @@ public class StatementCommande{
         java.util.Date debut =  rset1.getDate(1);
         java.util.Date fin =  rset1.getDate(2);
         java.util.Date now = new java.util.Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dateparam = sdf.format(now);
         rset1.close();
         stmt1.close();
         if(!(now.after(debut)) || !(now.before(fin))){
@@ -143,6 +149,7 @@ public class StatementCommande{
         stmt2.setInt(1, idProduit);
         stmt2.setString(2,ModeConditionnement);
         stmt2.setDouble(3,poidsUnitaire);
+        stmt2.setString(4,dateparam);
         ResultSet rset2 = stmt2.executeQuery();
         rset2.next();
         double qtedispo = rset2.getDouble(1);
@@ -181,11 +188,9 @@ public class StatementCommande{
             stmt.setInt(1, idProduit);
             ResultSet rset = stmt.executeQuery();
             ArrayList<Double> listePoids = new ArrayList<>();
-            int iPoids = 0; 
             while (rset.next()){
-                iPoids++;
                 double poids = rset.getDouble(1);
-                System.out.println(iPoids + " : " + poids);
+                System.out.println(poids);
             }
             rset.close();
             stmt.close();
@@ -403,12 +408,53 @@ public class StatementCommande{
             e.printStackTrace(System.err);
       }
     }
-    
-    public void ajouteNovAdresse(String adresseClient,String emailClient){
+    public boolean verifieAdresseExist(String adresse){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STVERIFIEADRESSEXISTE);
+        stmt.setString(1, adresse);
+        ResultSet rst = stmt.executeQuery();
+        if (rst.next()){
+            rst.close();
+            stmt.close();
+            return true;
+        } else {
+            rst.close();
+            stmt.close();
+            return false;
+        }
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return false;
+      }
+    }
+    public boolean verifieEmailExist(String emailClient){
+    try{
+        PreparedStatement stmt = conn.prepareStatement(STVERIFIEEMAILEXIST);
+        stmt.setString(1, emailClient);
+        ResultSet rst = stmt.executeQuery();
+        if (rst.next()){
+            rst.close();
+            stmt.close();
+            return true;
+        } else {
+            rst.close();
+            stmt.close();
+            return false;
+        }
+      }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return false;
+      }
+    }
+    public void ajouteNovAdresseClient(String adresseClient,String emailClient){
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
-        stmt.setString(1,adresseClient);
+        if (!verifieAdresseExist(adresseClient)){
+            stmt.setString(1,adresseClient);
+        }
         stmt2.setString(1,emailClient);
         stmt2.setString(2, adresseClient);
         int nbAjout = stmt.executeUpdate();
@@ -425,11 +471,11 @@ public class StatementCommande{
             e.printStackTrace(System.err);
       }
     }
-    public ArrayList<String> getAdresseClient(int idClient){
+    public ArrayList<String> getAdresseClient(String emailClient){
     // Retourne les adressesLivraison d'un client à partir de son idClient
     try{
         PreparedStatement stmt = conn.prepareStatement(STGETADRESS);
-        stmt.setInt(1,idClient);
+        stmt.setString(1,emailClient);
         ResultSet rst = stmt.executeQuery();
         int iAdresse = 0;
         ArrayList<String> adresseArray = new ArrayList<>(); 
@@ -547,7 +593,7 @@ public class StatementCommande{
         stmt.setString(4, dateparam);
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
-        while(quantiteP > 0){
+        while(quantiteP > 0 ){
             rset.next();
             argsCommandeP[0]++;
             double qtedispo = rset.getDouble(3);
@@ -559,7 +605,7 @@ public class StatementCommande{
             double[] argsDouble = {quantite,prix,sousTotal};
             ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, actualDate,PoidsUnitaire);
             prixTotal += sousTotal;
-            quantiteP -= qtedispo;
+            quantiteP -= quantite;
         }
         rset.close();
         stmt.close();
@@ -580,7 +626,7 @@ public class StatementCommande{
         stmt.setString(4, dateparam);
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
-        while(quantiteP > 0){
+        while(quantiteP > 0 ){
             rset.next();
             argsCommandeP[0]++;
             double qtedispo = rset.getDouble(3);
@@ -591,7 +637,7 @@ public class StatementCommande{
             double sousTotal = quantite*prix;
             double[] argsDouble = {quantite,prix,sousTotal};
             prixTotal += sousTotal;
-            quantiteP -= qtedispo;
+            quantiteP -= quantite;
         }
         rset.close();
         stmt.close();
@@ -618,7 +664,7 @@ public class StatementCommande{
             int quantite = Math.min(quantiteC,qtedispo);
             double[] argsDouble = {prix,sousTotal};
             prixTotal += sousTotal;
-            quantiteC -= qtedispo;
+            quantiteC -= quantite;
         }
         rset.close();
         stmt.close();
@@ -636,19 +682,19 @@ public class StatementCommande{
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
-        while(quantiteC > 0){
+        while(quantiteC > 0 ){
             rset.next();
             argsCommandeC[0]++;
             int qtedispo = rset.getInt(2);
             double prix = rset.getDouble(3);
-            String date = rset.getString(1);
+            java.util.Date date = rset.getDate(1);
             String actualDate = sdf.format(date);
             double sousTotal = quantiteC*prix;
             int quantite = Math.min(quantiteC,qtedispo);
             double[] argsDouble = {prix,sousTotal};
             ajouteCommandeC(argsCommandeC,argsDouble,actualDate,quantite);
             prixTotal += sousTotal;
-            quantiteC -= qtedispo;
+            quantiteC -= quantite;
         }
         rset.close();
         stmt.close();

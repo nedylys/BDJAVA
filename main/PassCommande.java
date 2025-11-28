@@ -57,7 +57,7 @@ public class PassCommande{
         if (!(statementcomm.verifieIdProduit(idProduit))){
             commandeProduit();
         }
-        System.err.println("Modes de Conditionnement disponibles : ");
+        System.out.println("Modes de Conditionnement disponibles : ");
         statementcomm.getModeConditionnement(idProduit);
         System.out.println("Entrer le Mode de Conditionnement : ");
         String ModeConditionnement = scan.nextLine();
@@ -72,7 +72,7 @@ public class PassCommande{
         }else{
             System.out.println("Les poidsUnitaire disponibles : ");
             statementcomm.choisirPoidsUnitaire(idProduit);
-            System.out.println("Entrer le poids unitaire (ila kntni safih : 5ssk taper le POIDS machi le numéro) : ");
+            System.out.println("Entrer le poids unitaire");
             PoidsUnitaire = scan.nextDouble();
             scan.nextLine();
         }
@@ -83,7 +83,7 @@ public class PassCommande{
         if (commande){
             System.out.println("Votre produit est sur commande ");
             int delai = statementcomm.getDelaiDispo(idProduit);
-            System.out.println("Votre produit sera disponible dans " + delai);
+            System.out.println("Votre produit sera disponible dans " + delai + " heures");
         }else{
             boolean dispo = statementcomm.getDispo(idProduit, qte, ModeConditionnement, PoidsUnitaire);
             if (!dispo){
@@ -154,16 +154,13 @@ public class PassCommande{
         beginCommande();
     }
     public void finalCommande(){
-        System.out.println("C'est un nouveau client ? ");
-        System.out.println("Taper true or false : ");
-        boolean nvclient = scan.nextBoolean();
-        scan.nextLine();
-        String emailClient;
+        System.out.println("Entrer l'email du client : ");
+        String emailClient = scan.nextLine();
+        boolean nvclient = !(statementcomm.verifieEmailExist(emailClient));
         int idClient;
         if (nvclient){
+            System.out.println("C'est un nouveau Client");
             idClient = statementcomm.nbClient();
-            System.out.println("Entrer l'email du client : ");
-            emailClient = scan.nextLine();
             System.out.println("Entrer le Nom du client : ");
             String nom = scan.nextLine();
             System.out.println("Entrer le Prenom du client : ");
@@ -173,8 +170,7 @@ public class PassCommande{
             String[] agrsClient = {emailClient,nom,prenom,numtelephone};
             statementcomm.ajouteNovClient(agrsClient, idClient);
         } else {
-            System.out.println("Entrer l'email du client : ");
-            emailClient = scan.nextLine();
+            System.out.println("Ce client existe déja dans la base");
             idClient = statementcomm.getIdClient(emailClient);
             if (idClient == 0) {
                finalCommande();
@@ -194,8 +190,7 @@ public class PassCommande{
         System.out.println("Taper true or false : ");
         boolean livraison = scan.nextBoolean();
         scan.nextLine();
-        String ModeRecuperation = ""; // afin d'initiliser argsCommande
-        String [] argsCommande = {ModePaiement,ModeRecuperation};
+        String ModeRecuperation;// afin d'initiliser argsCommande
         String adresse;
         if (livraison){
             ModeRecuperation = "Livraison";
@@ -211,10 +206,10 @@ public class PassCommande{
             if (adresselivraison){
                System.out.println("Entrer l'adresse de livraison : ");
                adresse = scan.nextLine();
-               statementcomm.ajouteNovAdresse(adresse, emailClient);
+               statementcomm.ajouteNovAdresseClient(adresse, emailClient);
             } else{
-                ArrayList<String> adresseArray = statementcomm.getAdresseClient(idClient);
-                System.out.println("Choisisez l'addresse de livraison (taper le numéro ila knti safih) : ");
+                ArrayList<String> adresseArray = statementcomm.getAdresseClient(emailClient);
+                System.out.println("Choisisez l'addresse de livraison : ");
                 int numchoisi = scan.nextInt();
                 scan.nextLine();
                 adresse = adresseArray.get(numchoisi - 1);
@@ -226,10 +221,12 @@ public class PassCommande{
             System.out.println("L'écrire en format YYYY-MM-DD : ");
             String dateLivraison = scan.nextLine();
             String[] argsLivraison = {dateLivraison,adresse};
+            String [] argsCommande = {ModePaiement,ModeRecuperation};
             statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeLivrer(idCommande, fraisLivraison, argsLivraison);
         } else{
             ModeRecuperation = "Retrait en boutique";
+            String [] argsCommande = {ModePaiement,ModeRecuperation};
             statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeBoutique(idCommande);
         }
@@ -245,7 +242,6 @@ public class PassCommande{
              double qteC = commandeC.getQte();
              statementcomm.ajouteCommandeGlobalC(argsCommandeC,(int) qteC);
         }
-        System.out.println("Cette commande de vous coutera au global " + prixCommande); 
         System.out.println("La commande globale vous coutera " + this.prixCommande);
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
