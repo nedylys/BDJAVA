@@ -94,7 +94,7 @@ public class StatementCommande{
     }
    
     public double calculePrixProduit(int idProduit, double quantite,String ModeConditionnement) throws SQLException{
-        // Retourne le prix d'une commande d'un produit
+        // Retourne le prix d'une commande d'un produit ELLE EST FAUSSE !!!!!!!!!!!!!!!!!
         // try{
         PreparedStatement stmt = conn.prepareStatement(STPrixProduit);
         stmt.setInt(1, idProduit);
@@ -113,7 +113,7 @@ public class StatementCommande{
     //   }
     }
     public double calculePrixContenant(int idContenant, int quantite) throws SQLException{
-        // Retourne le prix d'une commande d'un contenant
+        // Retourne le prix d'une commande d'un contenant ELLE EST FAUSSE !!!!!!!!!!!!!!!!!
         // try{
             PreparedStatement stmt = conn.prepareStatement(STPrixContenant);
             stmt.setInt(1, idContenant);
@@ -247,7 +247,6 @@ public class StatementCommande{
                 stmt.close();
                 return true;
             }else{
-                System.out.println("L'IdProduit est faux");
                 rset.close();
                 stmt.close();
                 return false;
@@ -546,7 +545,7 @@ public class StatementCommande{
         stmt.executeUpdate();
         stmt.close();
     }
-    public double ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire) throws SQLException{
+    public void ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STCARACTP);
         stmt.setInt(1,argsCommandeP[2]);
         stmt.setString(2, ModeConditionnement);
@@ -570,7 +569,7 @@ public class StatementCommande{
                 String date = sdf.format(sqlDate);
 
                 
-                System.out.println(date);
+
                 double quantite = Math.min(quantiteP,qtedispo);
                 double sousTotal = quantite*prix;
                 double[] argsDouble = {quantite,prix,sousTotal};
@@ -596,9 +595,8 @@ public class StatementCommande{
 
         rset.close();
         stmt.close();
-        return prixTotal;
     }
-    public double ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC) throws SQLException{
+    public void ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC) throws SQLException{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
         stmt.setInt(1,argsCommandeC[2]);
         ResultSet rset = stmt.executeQuery();
@@ -635,6 +633,97 @@ public class StatementCommande{
                 quantiteC -= qtedispo;
             }
         }
+        rset.close();
+        stmt.close();
+    }
+    public double retournePrixCommandeC(int[] argsCommandeC,int quantiteC) throws SQLException{
+        PreparedStatement stmt = conn.prepareStatement(STCARACTC);
+        stmt.setInt(1,argsCommandeC[2]);
+        ResultSet rset = stmt.executeQuery();
+        double prixTotal = 0;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        try (PreparedStatement updateStmt = conn.prepareStatement(ST_UPDATE_STOCK_C)) {
+            while(quantiteC > 0 && rset.next()){
+                // rset.next();
+                argsCommandeC[0]++;
+                int qtedispo = rset.getInt(2);
+                double prix = rset.getDouble(3);
+                
+                java.sql.Date sqlDate = rset.getDate(1);
+                String date = sdf.format(sqlDate);
+                double sousTotal = quantiteC*prix;
+                int quantite = Math.min(quantiteC,qtedispo);
+                double[] argsDouble = {prix,sousTotal};
+                
+                
+
+                java.sql.Date dateReception = rset.getDate(1);
+
+                updateStmt.setDouble(1, quantite);
+                updateStmt.setInt(2, argsCommandeC[2]);
+                updateStmt.setDate(3, dateReception);
+
+                int rowsAffected = updateStmt.executeUpdate();
+                if (rowsAffected ==0) {
+                    throw new SQLException("Le lot Contenant a disparu ou le stock est insuffisant pendant la transaction. ");
+                }
+
+                prixTotal += sousTotal;
+                quantiteC -= qtedispo;
+            }
+        }
+        rset.close();
+        stmt.close();
+        return prixTotal;
+    }
+    public double retournePrixCommandeP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire) throws SQLException{
+        PreparedStatement stmt = conn.prepareStatement(STCARACTP);
+        stmt.setInt(1,argsCommandeP[2]);
+        stmt.setString(2, ModeConditionnement);
+        stmt.setDouble(3,PoidsUnitaire);
+        java.util.Date now = new java.util.Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dateparam = sdf.format(now);
+        stmt.setString(4, dateparam);
+        ResultSet rset = stmt.executeQuery();
+        double prixTotal = 0;
+
+        try (PreparedStatement updateStmt = conn.prepareStatement(ST_UPDATE_STOCK_P)) {
+            while(quantiteP > 0 && rset.next()){
+                // rset.next();
+                argsCommandeP[0]++;
+                double qtedispo = rset.getDouble(3);
+                double prix = rset.getDouble(1);
+                java.sql.Date dateReception = rset.getDate(2);
+
+                java.sql.Date sqlDate = rset.getDate(2);
+                String date = sdf.format(sqlDate);
+
+                
+                double quantite = Math.min(quantiteP,qtedispo);
+                double sousTotal = quantite*prix;
+                double[] argsDouble = {quantite,prix,sousTotal};
+                
+                
+                
+
+                updateStmt.setDouble(1, quantite);
+                updateStmt.setInt(2, argsCommandeP[2]);
+                updateStmt.setString(3, ModeConditionnement);
+                updateStmt.setDouble(4, PoidsUnitaire);
+                updateStmt.setDate(5, dateReception);
+            
+                int rowsAffected = updateStmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new SQLException("Erreur critique : Le lot Produit a disparu ou le stock est insuffisant pendant la transaction.");
+                }
+
+                prixTotal += sousTotal;
+                quantiteP -= qtedispo;
+            }
+        }
+
         rset.close();
         stmt.close();
         return prixTotal;
