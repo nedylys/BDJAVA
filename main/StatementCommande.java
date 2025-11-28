@@ -65,7 +65,7 @@ public class StatementCommande{
 
     static final String STCOMMBOUTIQUE = "INSERT INTO CommandeenBoutique VALUES(?,'En preparation')";
     
-    static final String STCOMMLIVRER = "INSERT INTO CommandaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?)";
+    static final String STCOMMLIVRER = "INSERT INTO CommandeaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?)";
     
     private Connection conn;
     
@@ -553,11 +553,11 @@ public class StatementCommande{
             double qtedispo = rset.getDouble(3);
             double prix = rset.getDouble(1);
             java.util.Date date = rset.getDate(2);
-            String actual_date = sdf.format(date);
+            String actualDate = sdf.format(date);
             double quantite = Math.min(quantiteP,qtedispo);
             double sousTotal = quantite*prix;
             double[] argsDouble = {quantite,prix,sousTotal};
-            ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, actual_date,PoidsUnitaire);
+            ajouteCommandeP(argsCommandeP, ModeConditionnement, argsDouble, actualDate,PoidsUnitaire);
             prixTotal += sousTotal;
             quantiteP -= qtedispo;
         }
@@ -633,6 +633,7 @@ public class StatementCommande{
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
         stmt.setInt(1,argsCommandeC[2]);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
         while(quantiteC > 0){
@@ -641,10 +642,11 @@ public class StatementCommande{
             int qtedispo = rset.getInt(2);
             double prix = rset.getDouble(3);
             String date = rset.getString(1);
+            String actualDate = sdf.format(date);
             double sousTotal = quantiteC*prix;
             int quantite = Math.min(quantiteC,qtedispo);
             double[] argsDouble = {prix,sousTotal};
-            ajouteCommandeC(argsCommandeC,argsDouble,date,quantite);
+            ajouteCommandeC(argsCommandeC,argsDouble,actualDate,quantite);
             prixTotal += sousTotal;
             quantiteC -= qtedispo;
         }
