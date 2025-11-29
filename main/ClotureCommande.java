@@ -6,6 +6,7 @@ import java.util.Scanner;
 public class ClotureCommande {
     Connection connection ; 
     MenuPrincipal menu ; 
+    public static final java.util.Set<Integer> commandesVerrouillees = new java.util.HashSet<>();
 
     public ClotureCommande ( Connection connection , MenuPrincipal menu ){
         this.connection = connection  ; 
@@ -59,6 +60,19 @@ public class ClotureCommande {
             System.out.println("\nEntrez l'ID de la commande à clôturer :\n");
             System.out.print("ID commande : ");
             int id = Integer.parseInt(scanner.nextLine());
+            synchronized (ClotureCommande.commandesVerrouillees) {
+            if (ClotureCommande.commandesVerrouillees.contains(id)) {
+                System.out.println(" Cette commande est déjà en cours de clôture par un autre gérant.");
+                retour();
+                return;
+            }
+
+            // Ajouter le verrou
+            ClotureCommande.commandesVerrouillees.add(id);
+            System.out.println("Verrou appliqué sur la commande " + id);
+            }  
+            
+
 
             
 
@@ -320,8 +334,11 @@ public class ClotureCommande {
                 retour();
                 return; }
             connection.commit();
+            synchronized (this.commandesVerrouillees) {
+            this.commandesVerrouillees.remove(id);
             
         }    
+    }
         catch (SQLException e) {
             System.out.println("Erreur lors de la clôture de la commande : " + e.getMessage());
             retour();
