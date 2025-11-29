@@ -154,7 +154,7 @@ CREATE TABLE LotContenant(
     PrixVenteCTTC INT CHECK (PrixVenteCTTC >= 0),
     PRIMARY KEY (DateReceptionC, idContenant),
     CONSTRAINT fk_lot_contenant
-        FOREIGN KEY (idContenant) 
+        FOREIGN KEY (idContenant)
         REFERENCES Contenant(idContenant)
         ON DELETE CASCADE
 );
@@ -271,7 +271,7 @@ SET StatutCommandeB = 'Prete'
 WHERE StatutCommandeB = 'Prête'; */
 
 
-CREATE TABLE PerteProduit(
+/* CREATE TABLE PerteProduit(
     idPerteP INT,
     idProduit INT,
     DatePerteP DATE,
@@ -296,12 +296,42 @@ CREATE TABLE PerteContenant(
         REFERENCES Contenant(idContenant)
         ON DELETE CASCADE
 );
-
+ */
 CREATE TABLE ProduitStock(
     idProduit INT PRIMARY KEY,
     CONSTRAINT fk_produit_stock
         FOREIGN KEY (idProduit) 
         REFERENCES Produit(idProduit)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE PerteProduit(
+    idPerteP INT,
+    idProduit INT,
+    ModeConditionnement VARCHAR2(30),
+    PoidsUnitaire FLOAT,
+    DateReceptionP DATE,
+    DatePerteP DATE,
+    QuantitePerdueP INT CHECK (QuantitePerdueP > 0),
+    NaturePerteP VARCHAR2(255) CHECK (NaturePerteP IN ('vol','casse')),
+    PRIMARY KEY (idPerteP),
+    CONSTRAINT fk_lperte_produit_lot
+        FOREIGN KEY (DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire) 
+        REFERENCES LotProduit(DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE PerteContenant(
+    idPerteC INT,
+    idContenant INT,
+    DateReceptionC DATE,
+    DatePerteC DATE,
+    QuantitePerdueC INT CHECK (QuantitePerdueC > 0),
+    NaturePerteP VARCHAR2(255) CHECK (NaturePerteP IN ('vol','casse')),
+    PRIMARY KEY (idPerteC),
+    CONSTRAINT fk_perte_contenant_lot
+        FOREIGN KEY (DateReceptionC, idContenant) 
+        REFERENCES LotContenant(DateReceptionC, idContenant)
         ON DELETE CASCADE
 );
 
