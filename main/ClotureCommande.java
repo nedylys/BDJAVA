@@ -15,7 +15,7 @@ public class ClotureCommande {
     public void cloturerCommande() {
         System.out.println("\n=== Cloture d'une commande ===");
         try {
-            connection.commit();
+            
             Scanner scanner = new Scanner(System.in);
             System.out.print("Voulez-vous afficher la liste des commandes en cours ? (1 = Oui / 0 = Non) : ");
             int choix = Integer.parseInt(scanner.nextLine());
