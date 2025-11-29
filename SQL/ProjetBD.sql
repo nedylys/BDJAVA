@@ -48,7 +48,8 @@ CREATE TABLE Produit(
     idProduit INT PRIMARY KEY,
     NomProduit VARCHAR2(30),
     CategorieProduit VARCHAR2(30)
-         CHECK (CategorieProduit IN ('Fromage', 'boisson', 'cereales', 'legumineuse', 'fruits secs', 'huile')),
+         CHECK (CategorieProduit IN ('Fromage', 'boisson', 'cereales', 'legumineuse', 'fruits secs', 'huile', 'pates', 'viande', 'laitage',
+        'legume', 'fruit', 'epice')),
     DescriptionProduit VARCHAR2(255),
     StockProduit FLOAT CHECK (StockProduit >= 0),
     idProducteur INT,
@@ -98,7 +99,7 @@ CREATE TABLE ClientAnonyme(
 );
 
 CREATE TABLE Client(
-    emailClient VARCHAR2(30) PRIMARY KEY,
+    emailClient VARCHAR2(255) PRIMARY KEY,
     NomClient VARCHAR2(30),
     PrenomClient VARCHAR2(30),
     TelephoneClient VARCHAR2(15),
@@ -490,6 +491,7 @@ DROP trigger verif_stock_contenant;
 DROP trigger verif_stock_produit;
 DROP trigger verif_suppression_client;
 
+-- Pour determiner la table faisant figurer une contrainte check dont on a le nom
 SELECT 
     uc.constraint_name,
     uc.table_name,
@@ -498,3 +500,13 @@ FROM user_constraints uc
 JOIN user_cons_columns ucc
     ON uc.constraint_name = ucc.constraint_name
 WHERE uc.constraint_name = 'SYS_C001323422'; */
+
+-- Pour déterminer le nom d'une contrainte check
+/* SELECT constraint_name
+FROM user_constraints
+WHERE table_name = 'PRODUIT'
+  AND constraint_type = 'C'; -- 'C' is for check
+ */
+/*  ALTER TABLE clientapouradresselivraison
+MODIFY emailclient VARCHAR2(255);
+commit; */
