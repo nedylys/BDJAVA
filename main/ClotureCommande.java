@@ -15,6 +15,7 @@ public class ClotureCommande {
     public void cloturerCommande() {
         System.out.println("\n=== Cloture d'une commande ===");
         try {
+            connection.commit();
             Scanner scanner = new Scanner(System.in);
             System.out.print("Voulez-vous afficher la liste des commandes en cours ? (1 = Oui / 0 = Non) : ");
             int choix = Integer.parseInt(scanner.nextLine());
@@ -244,6 +245,10 @@ public class ClotureCommande {
                 ps.setString(1, "Recuperee");
                 ps.setInt(2, id);
                 ps.executeUpdate();
+                String updateDate = "UPDATE Commande SET DateRecuperation = SYSDATE WHERE idCommande = ?";
+                PreparedStatement psDate = connection.prepareStatement(updateDate);
+                psDate.setInt(1, id);
+                psDate.executeUpdate();
 
                 System.out.println("Commande marquée comme Récupérée !");
 
@@ -257,6 +262,10 @@ public class ClotureCommande {
                 ps.setString(1, "Livree");
                 ps.setInt(2, id);
                 ps.executeUpdate();
+                String updateDate = "UPDATE Commande SET DateRecuperation = SYSDATE WHERE idCommande = ?";
+                PreparedStatement psDate = connection.prepareStatement(updateDate);
+                psDate.setInt(1, id);
+                psDate.executeUpdate();
 
                 System.out.println("Commande marquée comme Livrée !");
                 
