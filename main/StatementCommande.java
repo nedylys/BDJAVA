@@ -71,6 +71,10 @@ public class StatementCommande{
     
     static final String STCOMMLIVRER = "INSERT INTO CommandeaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?)";
     
+    static final String STLOCKP = "SELECT * FROM LOTPRODUIT where idProduit = ? FOR UPDATE";
+
+    static final String STLOCKC = "SELECT * FROM LOTCONTENANT where idContenant = ? FOR UPDATE";
+    
     private Connection conn;
     
     public StatementCommande(Connection conn){
@@ -678,7 +682,6 @@ public class StatementCommande{
     public void ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC){
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
-        stmt.setInt(1,argsCommandeC[2]);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
@@ -702,5 +705,30 @@ public class StatementCommande{
             System.err.println("failed");
             e.printStackTrace(System.err);
       }
-    }           
+    }
+    public void lockP(int idProduit){
+        try{
+            PreparedStatement stmtLock = conn.prepareStatement(STLOCKP);
+            stmtLock.setInt(1,idProduit);
+            ResultSet rs = stmtLock.executeQuery();
+            System.out.println("Le lock a été effectué");
+            rs.close();
+            stmtLock.close(); 
+              }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }  
+    public void lockC(int idContenant){
+        try{
+            PreparedStatement stmtLock = conn.prepareStatement(STLOCKC);
+            stmtLock.setInt(1,idContenant);
+            ResultSet rs = stmtLock.executeQuery();
+            rs.close();
+            stmtLock.close(); 
+              }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }            
 }

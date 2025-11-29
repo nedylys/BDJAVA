@@ -13,6 +13,8 @@ public class PassCommande{
     private double prixCommande;
     private ArrayList<Commande> panierCommandeC;
     private ArrayList<CommandeProduit> panierCommandeP;
+    private ArrayList<Integer> listP;
+    private ArrayList<Integer> listC;
 
     public PassCommande(Connection conn,Scanner scan,MenuPrincipal menu){
         this.conn = conn;
@@ -22,6 +24,8 @@ public class PassCommande{
         prixCommande = 0;
         this.panierCommandeC = new ArrayList<Commande>();
         this.panierCommandeP = new ArrayList<CommandeProduit>();
+        this.listP = new ArrayList<Integer>();
+        this.listC = new ArrayList<Integer>();
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -108,6 +112,7 @@ public class PassCommande{
             CommandeProduit commandeP = new CommandeProduit(argsCommande, qte,ModeConditionnement,PoidsUnitaire);
             panierCommandeP.add(commandeP);
         }
+        listP.add(idProduit);
         System.out.println(" 1 : Recommander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -144,6 +149,7 @@ public class PassCommande{
             Commande commandeC = new Commande(argsCommandeC, (double) qte);
             panierCommandeC.add(commandeC);
         }
+        listC.add(idContenant);
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Recommander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -189,7 +195,7 @@ public class PassCommande{
         System.out.println("Taper true or false : ");
         boolean livraison = scan.nextBoolean();
         scan.nextLine();
-        String ModeRecuperation;// afin d'initiliser argsCommande
+        String ModeRecuperation; // afin d'initiliser argsCommande
         String adresse;
         if (livraison){
             ModeRecuperation = "Livraison";
@@ -253,7 +259,14 @@ public class PassCommande{
         System.out.println("Taper le numéro choisi:");
         try {
             conn.commit();
-            System.out.println("La commande a bien été crée");
+            System.out.println("La commande a bien été créee");
+            for (int idProduit : listP){
+                System.out.println("JDHJHDJDJN");
+                statementcomm.lockP(idProduit);
+            }
+            for (int idContenant : listC){
+                statementcomm.lockC(idContenant);
+            }
         } catch (SQLException e) {
         }
         beginCommande();
