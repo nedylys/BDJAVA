@@ -6,7 +6,6 @@ import java.util.Scanner;
 public class ClotureCommande {
     Connection connection ; 
     MenuPrincipal menu ; 
-    public static final java.util.Set<Integer> commandesVerrouillees = new java.util.HashSet<>();
 
     public ClotureCommande ( Connection connection , MenuPrincipal menu ){
         this.connection = connection  ; 
@@ -60,20 +59,24 @@ public class ClotureCommande {
             System.out.println("\nEntrez l'ID de la commande à clôturer :\n");
             System.out.print("ID commande : ");
             int id = Integer.parseInt(scanner.nextLine());
-            synchronized (ClotureCommande.commandesVerrouillees) {
-            if (ClotureCommande.commandesVerrouillees.contains(id)) {
-                System.out.println(" Cette commande est déjà en cours de clôture par un autre gérant.");
-                retour();
-                return;
+            try {
+                PreparedStatement lock = connection.prepareStatement(
+                        "SELECT idCommande FROM Commande WHERE idCommande = ? FOR UPDATE NOWAIT"
+                );
+                lock.setInt(1, id);
+                lock.executeQuery();
+
+                System.out.println("Verrou Oracle obtenu : vous pouvez clôturer la commande.");
+
+            } catch (SQLException e) {
+                if (e.getErrorCode() == 54) { // ORA-00054
+                    System.out.println("Cette commande est déjà en cours de clôture par un autre gérant.");
+                    retour();
+                    return;
+                } else {
+                    throw e;
+                }
             }
-
-            // Ajouter le verrou
-            ClotureCommande.commandesVerrouillees.add(id);
-            System.out.println("Verrou appliqué sur la commande " + id);
-            }  
-            
-
-
             
 
             String modeRecup = "";
@@ -153,7 +156,6 @@ public class ClotureCommande {
                     psDepiterP.executeUpdate()  ;
                     psDepiterC.executeUpdate()  ;
                     connection.commit()  ;
-                    System.out.println( " === Stock débité " ) ;
                     }
                 }
             } else if( modeRecup.equals("Livraison") ) {
@@ -231,6 +233,7 @@ public class ClotureCommande {
                 retour();
                 return ;
             }
+            
             System.out.print("=== Tapez 0 pour retour \n " +
             "=== Valider l'achat : V = validée, A = Annulée .\n");
             String key = scanner.nextLine().trim().toUpperCase();
@@ -318,9 +321,11 @@ public class ClotureCommande {
                 psRestP.setInt(2, id);
                 psRestC.setInt(1, id);
                 psRestC.setInt(2, id);
+
                 psRestP.executeUpdate();
                 psRestC.executeUpdate();
                 connection.commit();
+
                 System.out.println("Commande annulée !");
                 retour();
                 return;
@@ -334,11 +339,8 @@ public class ClotureCommande {
                 retour();
                 return; }
             connection.commit();
-            synchronized (this.commandesVerrouillees) {
-            this.commandesVerrouillees.remove(id);
             
         }    
-    }
         catch (SQLException e) {
             System.out.println("Erreur lors de la clôture de la commande : " + e.getMessage());
             retour();
@@ -350,6 +352,9 @@ public class ClotureCommande {
         
         retour();
     }
+
+
+
     public void retour(){
         Scanner scanner = new Scanner(System.in);
         System.out.println( "Taper 0 pour revenir au Menu principal");
