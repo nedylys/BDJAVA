@@ -36,6 +36,7 @@ public class PassCommande{
     public void beginCommande(){
         int numchoisi = scan.nextInt();
         scan.nextLine();
+        statementcomm.setLocktime();
         if (numchoisi == 1 ){
             commandeProduit();
         }
@@ -103,6 +104,8 @@ public class PassCommande{
         System.out.println("Taper true or false : ");
         boolean creecommande = scan.nextBoolean(); 
         scan.nextLine();
+        listP.add(idProduit);
+        statementcomm.lockP(idProduit);
         if (creecommande){
             int numligneP = 0;
             int[] argsCommande = {numligneP,idCommande,idProduit};
@@ -112,7 +115,6 @@ public class PassCommande{
             CommandeProduit commandeP = new CommandeProduit(argsCommande, qte,ModeConditionnement,PoidsUnitaire);
             panierCommandeP.add(commandeP);
         }
-        listP.add(idProduit);
         System.out.println(" 1 : Recommander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -140,6 +142,8 @@ public class PassCommande{
         System.out.println("Taper true or false : ");
         boolean creecommande = scan.nextBoolean(); 
         scan.nextLine();
+        listC.add(idContenant);
+        statementcomm.lockC(idContenant);
         if (creecommande){
             int numligneC = 0;
             int[] argsCommandeC = {numligneC,idCommande,idContenant};
@@ -149,7 +153,6 @@ public class PassCommande{
             Commande commandeC = new Commande(argsCommandeC, (double) qte);
             panierCommandeC.add(commandeC);
         }
-        listC.add(idContenant);
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Recommander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -227,7 +230,7 @@ public class PassCommande{
             String dateLivraison = scan.nextLine();
             String[] argsLivraison = {dateLivraison,adresse};
             String [] argsCommande = {ModePaiement,ModeRecuperation};
-            idCommande = statementcomm.nbIdCommande();
+            idCommande = statementcomm.nbIdCommande() + 7;
             statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeLivrer(idCommande, fraisLivraison, argsLivraison);
         } else{
@@ -239,44 +242,34 @@ public class PassCommande{
         }
         for (CommandeProduit commandeP : panierCommandeP){
              int[] argsCommandeP = commandeP.getArgsCommande();
-             argsCommandeP[0] = idCommande;
+             argsCommandeP[1] = idCommande;
              double qteP = commandeP.getQte();
              String ModedeConditionnement = commandeP.getModeConditionnement();
              double PoidsUnitaire = commandeP.getPoidsUnitaire();
              statementcomm.ajouteCommandeGlobalP(argsCommandeP, ModedeConditionnement, qteP, PoidsUnitaire);
+        
         }
         for (Commande commandeC : panierCommandeC){
              int[] argsCommandeC = commandeC.getArgsCommande();
-             argsCommandeC[0] = idCommande;
+             argsCommandeC[1] = idCommande;
              double qteC = commandeC.getQte();
              statementcomm.ajouteCommandeGlobalC(argsCommandeC,(int) qteC);
         }
+        panierCommandeP.clear();
+        panierCommandeC.clear();
         System.out.println("La commande globale vous coutera " + this.prixCommande);
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
         System.out.println(" 5 : Retour au menu prinicpal");
         System.out.println("Taper le numéro choisi:");
-        try {
-            conn.commit();
-            System.out.println("La commande a bien été créee");
-            for (int idProduit : listP){
-                System.out.println("JDHJHDJDJN");
-                statementcomm.lockP(idProduit);
-            }
-            for (int idContenant : listC){
-                statementcomm.lockC(idContenant);
-            }
-        } catch (SQLException e) {
-        }
+        System.out.println("La commande a bien été créee");
         beginCommande();
     }
     public void annuleCommande(){
-        try {
-            conn.rollback();
-            System.out.println("La commande a bien été annulée");
-        } catch (SQLException e) {
-        }
+        panierCommandeP.clear();
+        panierCommandeC.clear();
+        System.out.println("La commande a bien été annulée");
     }
     public void retour(){
         menu.afficherMenu();

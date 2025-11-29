@@ -75,6 +75,8 @@ public class StatementCommande{
 
     static final String STLOCKC = "SELECT * FROM LOTCONTENANT where idContenant = ? FOR UPDATE";
     
+    static final String STLOCKTIME = "ALTER SESSION SET ddl_lock_timeout = 5";
+    
     private Connection conn;
     
     public StatementCommande(Connection conn){
@@ -632,7 +634,6 @@ public class StatementCommande{
         double prixTotal = 0;
         while(quantiteP > 0 ){
             rset.next();
-            argsCommandeP[0]++;
             double qtedispo = rset.getDouble(3);
             double prix = rset.getDouble(1);
             java.util.Date date = rset.getDate(2);
@@ -660,7 +661,6 @@ public class StatementCommande{
         double prixTotal = 0;
         while(quantiteC > 0){
             rset.next();
-            argsCommandeC[0]++;
             int qtedispo = rset.getInt(2);
             double prix = rset.getDouble(3);
             String date = rset.getString(1);
@@ -683,6 +683,7 @@ public class StatementCommande{
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        stmt.setInt(1,argsCommandeC[2]);
         ResultSet rset = stmt.executeQuery();
         double prixTotal = 0;
         while(quantiteC > 0 ){
@@ -710,6 +711,8 @@ public class StatementCommande{
         try{
             PreparedStatement stmtLock = conn.prepareStatement(STLOCKP);
             stmtLock.setInt(1,idProduit);
+            System.out.println("En cours de Lock ... Veuillez attendre");
+            System.out.println("  ");
             ResultSet rs = stmtLock.executeQuery();
             System.out.println("Le lock a été effectué");
             rs.close();
@@ -723,12 +726,26 @@ public class StatementCommande{
         try{
             PreparedStatement stmtLock = conn.prepareStatement(STLOCKC);
             stmtLock.setInt(1,idContenant);
+            System.out.println("En cours de Lock ... Veuillez attendre");
+            System.out.println("  ");
             ResultSet rs = stmtLock.executeQuery();
+            System.out.println("Le lock a été effectué");
             rs.close();
             stmtLock.close(); 
               }catch (SQLException e) {
             System.err.println("failed");
             e.printStackTrace(System.err);
       }
-    }            
+    }
+    public void setLocktime(){
+        try{
+            PreparedStatement stmtLockTime = conn.prepareStatement(STLOCKTIME);
+            stmtLockTime.executeUpdate();
+            stmtLockTime.close(); 
+              }catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+      }
+    }
+           
 }
