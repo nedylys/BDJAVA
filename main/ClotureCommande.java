@@ -28,8 +28,8 @@ public class ClotureCommande {
                                 "       AND commandeenboutique.statutcommandeb != 'Annulee' " +
                                 "       AND commandealivrer.statutcommandel != 'Livree' " +
                                 "       AND commandealivrer.statutcommandel != 'Annulee')"+
-                                "       AND commandealivrer.statutcommandel != 'prete' " +
-                                "       AND commandeenboutique.statutcommandeb != 'prete' " ;
+                                "       AND commandealivrer.statutcommandel != 'Prete' " +
+                                "       AND commandeenboutique.statutcommandeb != 'Prete' " ;
             PreparedStatement commandes = connection.prepareStatement(requete1);
             ResultSet rs = commandes.executeQuery();
 
@@ -156,7 +156,7 @@ public class ClotureCommande {
             psDepiterC.executeUpdate()  ;
             connection.commit()  ;
             System.out.print(
-            "\n=== Le stock est deputé : \n "+
+            "\n === Le stock est deputé : \n "+
             "=== Tapez 0 pour retour \n " +
             "=== Valider l'achat : V = validée, A = Annulée .\n");
             String key = scanner.nextLine().trim().toUpperCase();
