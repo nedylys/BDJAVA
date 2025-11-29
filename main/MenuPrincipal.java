@@ -28,7 +28,8 @@ public class MenuPrincipal {
                 System.out.println("3. Suivi des commandes");
                 System.out.println("4. Consulter les alertes de péremption");
                 System.out.println("5. Clôturer une commande");
-                System.out.println("6. Quitter");
+                System.out.println("6. Gestion des pertes");
+                System.out.println("7. Quitter");
                 System.out.println("========================================================");
                 System.out.println("Saisissez un choix s'il vous plaît ");
     
@@ -47,7 +48,8 @@ public class MenuPrincipal {
                     case 3 -> suiviCommandes();
                     case 4 -> consulterAlertes(scanner,choix);
                     case 5 -> cloturerUneCommande();
-                    case 6 -> System.out.println("Au revoir !");
+                    case 6 -> gestionPertes();
+                    case 7 -> System.out.println("Au revoir !");
                     default -> System.out.println("Choix invalide, veuillez réessayer.");
                 }
             }
@@ -271,17 +273,230 @@ public class MenuPrincipal {
             try { connection.rollback(); } catch (SQLException ignore) {}
         }
     }
+    public void gestionPertes(){
+        System.out.println("\n ==================================== Espace gestion des pertes ====================================");
+        System.out.println("1 : Déclarer une perte Produit");
+        System.out.println("2 : Déclarer une perte Contenant");
+        System.out.println("0 : Retour");
+        System.out.print("Votre choix : ");
+        Scanner scan = new Scanner(System.in); 
+        int choix = scan.nextInt();
+        scan.nextLine();
+
+        if (choix == 1) {
+            perteProduit();
+        } else if (choix == 2) {
+            perteContenant();
+        } else {
+            return;
+        }
+    }
+    private void perteProduit() {
+    try {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("\n--- Déclarer une perte PRODUIT ---");
+
+        System.out.print("IdProduit : ");
+        int idProduit = Integer.parseInt(scanner.nextLine());
+
+        System.out.print("Date de Réception (YYYY-MM-DD) : ");
+        java.sql.Date dateRec = java.sql.Date.valueOf(scanner.nextLine());
+
+        System.out.print("Mode Conditionnement (vrac/preconditionne) : ");
+        String mode = scanner.nextLine();
+
+        System.out.print("Poids unitaire : ");
+        float poids = Float.parseFloat(scanner.nextLine());
+
+        PreparedStatement check = connection.prepareStatement(
+            "SELECT QuantiteDisponibleP FROM LotProduit " +
+            "WHERE idProduit=? AND DateReceptionP=? AND ModeConditionnement=? AND PoidsUnitaire=?"
+        );
+        check.setInt(1, idProduit);
+        check.setDate(2, dateRec);
+        check.setString(3, mode);
+        check.setFloat(4, poids);
+        ResultSet rs = check.executeQuery();
+
+        if (!rs.next()) {
+            System.out.println("Lot introuvable.");
+            retour();
+            return;
+        }
+
+        float dispo = rs.getFloat(1);
+        System.out.println("Quantité disponible dans ce lot : " + dispo);
+
+        System.out.print("Quantité perdue : ");
+        int qte = Integer.parseInt(scanner.nextLine());
+
+        if (qte > dispo) {
+            System.out.println("Erreur : quantité perdue supérieure au stock disponible.");
+            retour();
+            return;
+        }
+
+        System.out.print("Nature (vol/casse) : ");
+        String nature = scanner.nextLine();
+
+        PreparedStatement psMax = connection.prepareStatement(
+            "SELECT NVL(MAX(idPerteP),0) FROM PerteProduit"
+        );
+        ResultSet rmax = psMax.executeQuery();
+        rmax.next();
+        int idPerte = rmax.getInt(1) + 1;
+
+
+        PreparedStatement insert = connection.prepareStatement(
+            "INSERT INTO PerteProduit VALUES (?, ?, ?, ?, ?, SYSDATE, ?, ?)"
+        );
+        insert.setInt(1, idPerte);
+        insert.setInt(2, idProduit);
+        insert.setString(3, mode);
+        insert.setFloat(4, poids);
+        insert.setDate(5, dateRec);
+        insert.setInt(6, qte);
+        insert.setString(7, nature);
+        insert.executeUpdate();
+
+  
+        PreparedStatement upd = connection.prepareStatement(
+            "UPDATE LotProduit SET QuantiteDisponibleP = QuantiteDisponibleP - ? " +
+            "WHERE idProduit=? AND DateReceptionP=? AND ModeConditionnement=? AND PoidsUnitaire=?"
+        );
+        upd.setInt(1, qte);
+        upd.setInt(2, idProduit);
+        upd.setDate(3, dateRec);
+        upd.setString(4, mode);
+        upd.setFloat(5, poids);
+        upd.executeUpdate();
+
+        connection.commit();
+        System.out.println("Perte PRODUIT enregistrée et stock mis à jour.");
+        retour();
+
+    } catch (Exception e) {
+        try { connection.rollback(); } catch(Exception ignored) {}
+        System.out.println("Erreur : " + e.getMessage());
+    }
+}
+
+
+    private void perteContenant() {
+    try {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("\n--- Déclarer une perte CONTENANT ---");
+
+        // Identifiant du contenant
+        System.out.print("IdContenant : ");
+        int idContenant = Integer.parseInt(scanner.nextLine());
+
+      
+        System.out.print("Date de Réception (YYYY-MM-DD) : ");
+        java.sql.Date dateRec = java.sql.Date.valueOf(scanner.nextLine());
+
+       
+        PreparedStatement check = connection.prepareStatement(
+            "SELECT QuantiteDisponibleC FROM LotContenant " +
+            "WHERE idContenant=? AND DateReceptionC=?"
+        );
+        check.setInt(1, idContenant);
+        check.setDate(2, dateRec);
+        ResultSet rs = check.executeQuery();
+
+        if (!rs.next()) {
+            System.out.println("Lot introuvable.");
+            retour();
+            return;
+        }
+
+        int dispo = rs.getInt(1);
+        System.out.println("Quantité disponible dans ce lot : " + dispo);
+
+        // Quantité perdue
+        System.out.print("Quantité perdue : ");
+        int qte = Integer.parseInt(scanner.nextLine());
+
+        if (qte > dispo) {
+            System.out.println("Erreur : quantité perdue supérieure au stock disponible.");
+            retour();
+            return;
+        }
+
+        // Nature
+        System.out.print("Nature (vol/casse) : ");
+        String nature = scanner.nextLine();
+
+        PreparedStatement psMax = connection.prepareStatement(
+            "SELECT NVL(MAX(idPerteC),0) FROM PerteContenant"
+        );
+        ResultSet rmax = psMax.executeQuery();
+        rmax.next();
+        int idPerte = rmax.getInt(1) + 1;
+
+        
+        PreparedStatement insert = connection.prepareStatement(
+            "INSERT INTO PerteContenant VALUES (?, ?, ?, SYSDATE, ?, ?)"
+        );
+        insert.setInt(1, idPerte);
+        insert.setInt(2, idContenant);
+        insert.setDate(3, dateRec);
+        insert.setInt(4, qte);
+        insert.setString(5, nature);
+        insert.executeUpdate();
+
+        // Mise à jour du stock du lot
+        PreparedStatement upd = connection.prepareStatement(
+            "UPDATE LotContenant SET QuantiteDisponibleC = QuantiteDisponibleC - ? " +
+            "WHERE idContenant=? AND DateReceptionC=?"
+        );
+        upd.setInt(1, qte);
+        upd.setInt(2, idContenant);
+        upd.setDate(3, dateRec);
+        upd.executeUpdate();
+
+        connection.commit();
+        System.out.println("Perte CONTENANT enregistrée et stock mis à jour.");
+        retour();
+
+    } catch (Exception e) {
+        try { connection.rollback(); } catch(Exception ignored) {}
+        System.out.println("Erreur : " + e.getMessage());
+    }
+}
+
+
+
+
+    public void retour(){
+        Scanner scanner = new Scanner(System.in);
+        System.out.println( "Taper 0 pour revenir au Menu principal");
+        int choix = scanner.nextInt();
+
+        switch (choix) {
+            case 0 -> {
+    
+                afficherMenu();
+            }    
+            
+            default -> {
+                System.out.println("Choix invalide, veuillez réessayer !");
+            }
+        }
+    }
+
+
         private boolean dumpResultSet(ResultSet rset) throws SQLException {
             ResultSetMetaData rsetmd = rset.getMetaData();
             int columnCount = rsetmd.getColumnCount();
             int padding = 2; // espace entre les colonnes
         
-            // Calculer la largeur maximale pour chaque colonne
+
             int[] widths = new int[columnCount];
             List<String[]> rows = new ArrayList<>();
             boolean hasResults = false;
         
-            // Parcourir le ResultSet pour déterminer la largeur max des données
+    
             while (rset.next()) {
                 hasResults = true;
                 String[] row = new String[columnCount];
