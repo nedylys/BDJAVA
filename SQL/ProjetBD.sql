@@ -344,6 +344,26 @@ CREATE TABLE ProduitCommande(
         ON DELETE CASCADE
 );
 
+CREATE TABLE DateRecuperation (
+    DateRecuperation DATE,
+    PRIMARY KEY (DateRecuperation)
+);
+
+CREATE TABLE CommandeApourRecup (
+    idCommande INT,
+    DateRecuperation DATE,
+    PRIMARY KEY (idCommande, DateRecuperation),
+    CONSTRAINT fk_idCommande
+        FOREIGN KEY (idCommande)
+        REFERENCES Commande(idCommande)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_DateRecuperation
+        FOREIGN KEY (DateRecuperation)
+        REFERENCES DateRecuperation(DateRecuperation)
+        ON DELETE CASCADE
+);
+
+
 
 /* CREATE OR REPLACE TRIGGER Verif_Suppression_Client
 -- Trigger pour vérifier si un client a des commandes avant suppression

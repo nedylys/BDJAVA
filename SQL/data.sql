@@ -613,3 +613,15 @@ INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (19, TO_DA
 -- Produit 20 : 2 saisons
 INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (20, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
 INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (20, TO_DATE('01-OCT-25','DD-MON-RR'), TO_DATE('31-DEC-25','DD-MON-RR'));
+
+INSERT INTO DateRecuperation (DateRecuperation)
+VALUES (TO_DATE('30-NOV-25', 'DD-MON-RR'));
+
+INSERT INTO CommandeApourRecup (idCommande, DateRecuperation)
+VALUES (4, TO_DATE('30-NOV-25', 'DD-MON-RR'));
+
+INSERT INTO CommandeApourRecup (idCommande, DateRecuperation)
+VALUES (5, TO_DATE('30-NOV-25', 'DD-MON-RR'));
+
+INSERT INTO CommandeApourRecup (idCommande, DateRecuperation)
+VALUES (3, TO_DATE('30-NOV-25', 'DD-MON-RR'));
