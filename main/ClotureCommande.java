@@ -235,7 +235,7 @@ public class ClotureCommande {
                 return ;
             }
             
-            System.out.print("=== Tapez 0 pour retour \n " +
+            System.out.print("=== Tapez 0 pour retour \n" +
             "=== Valider l'achat : V = validée, A = Annulée .\n");
             String key = scanner.nextLine().trim().toUpperCase();
 
@@ -245,10 +245,13 @@ public class ClotureCommande {
                 ps.setString(1, "Recuperee");
                 ps.setInt(2, id);
                 ps.executeUpdate();
-                String updateDate = "UPDATE Commande SET DateRecuperation = SYSDATE WHERE idCommande = ?";
-                PreparedStatement psDate = connection.prepareStatement(updateDate);
-                psDate.setInt(1, id);
+                String updateDate = " insert into DateRecuperation ( dateRecuperation ) values ( SYSDATE ) " ;
+                String updateCDate = " insert into CommandeApourRecup ( idCommande , dateRecuperation ) values ( ? , SYSDATE ) " ;
+                PreparedStatement psDate = connection.prepareStatement( updateDate ) ;
+                PreparedStatement psCDate = connection.prepareStatement( updateCDate ) ;
+                psCDate.setInt( 1 , id ) ;
                 psDate.executeUpdate();
+                psCDate.executeUpdate() ;   
 
                 System.out.println("Commande marquée comme Récupérée !");
 
@@ -262,10 +265,14 @@ public class ClotureCommande {
                 ps.setString(1, "Livree");
                 ps.setInt(2, id);
                 ps.executeUpdate();
-                String updateDate = "UPDATE Commande SET DateRecuperation = SYSDATE WHERE idCommande = ?";
-                PreparedStatement psDate = connection.prepareStatement(updateDate);
-                psDate.setInt(1, id);
+                String updateDate = " insert into DateRecuperation ( dateRecuperation ) values ( SYSDATE ) " ;
+                String updateCDate = " insert into CommandeApourRecup ( idCommande , dateRecuperation ) values ( ? , SYSDATE ) " ;
+                PreparedStatement psDate = connection.prepareStatement( updateDate ) ;
+                PreparedStatement psCDate = connection.prepareStatement( updateCDate ) ;
+                psCDate.setInt( 1 , id ) ;
                 psDate.executeUpdate();
+                psCDate.executeUpdate() ;   
+
 
                 System.out.println("Commande marquée comme Livrée !");
                 
