@@ -79,7 +79,7 @@ public class ClotureCommande {
                 }
             }
             
-
+            
             String modeRecup = "";
             PreparedStatement psMode = connection.prepareStatement(
                 "SELECT ModeRecuperation FROM Commande WHERE idCommande = ?"
@@ -99,6 +99,20 @@ public class ClotureCommande {
             String statut ="Prete"; 
             String requete ; 
             if ( modeRecup.equals("Retrait") ) {
+                System.out.println("\n === Voulez-vous  annuler la commande ? : Oui = 1 / Non = 0   \n");
+                int annuler = Integer.parseInt(scanner.nextLine()) ;
+                if ( annuler == 1 ) {
+                    PreparedStatement psAnnuler = connection.prepareStatement(
+                        "Update Commandeenboutique set StatutCommandeB = 'Annulee' where idCommande = ? "
+                    ) ;
+                    psAnnuler.setInt(1, id);
+                    psAnnuler.executeUpdate() ;
+                    System.out.println("Commande annulée !");
+                    retour();
+                    return;
+                }
+
+                    
                 String StatuC = "Select StatutCommandeB from Commandeenboutique where idCommande = ? " ;
                 PreparedStatement psStatut = connection.prepareStatement(StatuC);
                 psStatut.setInt(1, id);
@@ -157,9 +171,26 @@ public class ClotureCommande {
                     psDepiterP.executeUpdate()  ;
                     psDepiterC.executeUpdate()  ;
                     connection.commit()  ;
+                    System.out.println( "=== Stock débité " ) ;
+                    
+                    
+
                     }
                 }
             } else if( modeRecup.equals("Livraison") ) {
+                System.out.println("\n === Voulez-vous  annuler la commande ? : Oui = 1 / Non = 0   \n");
+                int annuler = Integer.parseInt(scanner.nextLine()) ;
+                if ( annuler == 1 ) {
+                    PreparedStatement psAnnuler = connection.prepareStatement(
+                        "Update CommandeaLivrer set StatutCommandeL = 'Annulee' where idCommande = ? "
+                    ) ;
+                    psAnnuler.setInt(1, id);
+                    psAnnuler.executeUpdate() ;
+                    System.out.println("Commande annulée !");
+                    retour();
+                    return;
+                }
+
                 String StatuL = "Select StatutCommandeL from CommandeaLivrer where idCommande = ? " ;
                 PreparedStatement psStatutL = connection.prepareStatement(StatuL);
                 psStatutL.setInt(1, id);
@@ -225,7 +256,7 @@ public class ClotureCommande {
                         psDepiterP.executeUpdate()  ;
                         psDepiterC.executeUpdate()  ;
                         connection.commit()  ;
-                        System.out.println( " === Stock débité " ) ;
+                        System.out.println( "=== Stock débité " ) ;
                     }
                 }
             }
