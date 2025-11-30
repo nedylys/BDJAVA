@@ -143,30 +143,27 @@ public class MenuPrincipal {
             
             
             try {
+                int oldIsolation = connection.getTransactionIsolation();
+                connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
                 System.out.println("\n===========================================================  🚨 Alertes de péremption ================================================================\n");
-                // Creation de la requete
+                PreparedStatement stmtp = connection.prepareStatement(Statement.Price_reduce);
+                int updated = stmtp.executeUpdate();
                 PreparedStatement stmt = connection.prepareStatement(Statement.ALERTES_PRE);
-                // Execution de la requete
                 ResultSet rset = stmt.executeQuery();
-                // Affichage du resultat
-                // Appeler dumpResultSet qui retourne un boolean
                 boolean hasResults = dumpResultSet(rset);
-                
                 if (!hasResults) {
-                    System.out.println("");
-                    System.out.println("Aucune alerte de péremption pour le moment. 🤗");
-                    System.out.println("");
-                }
-                else{
-                    PreparedStatement stmtp = connection.prepareStatement(Statement.Price_reduce);
-                    int updated = stmtp.executeUpdate();   
+                    System.out.println("\nAucune alerte de péremption pour le moment. 🤗\n");
+                } else {
+                    // On affiche le message de réduction après le tableau
                     if (updated > 0) {
-                        System.out.println("💸 Réduction appliquée sur " + updated + " lot(s).");
+                        System.out.println("\n💸 Réduction appliquée et prix mis à jour sur " + updated + " lot(s).");
                     } else {
-                        System.out.println("Aucune réduction appliquée.");
+                        System.out.println("\n✅ Les prix affichés incluent déjà les réductions.");
                     }
                 }
-                
+                connection.commit();
+                // 6. On remet le niveau d'isolation par défaut pour ne pas impacter le reste de l'app
+                connection.setTransactionIsolation(oldIsolation);
                 System.out.println(" 0 : Retour au menu principal");
                 choix = scanner.nextInt();
                     // Gestion des choix
