@@ -261,6 +261,12 @@ public class PassCommande{
             System.out.println("Ce client existe déja dans la base");
             idClient = statementcomm.getIdClient(emailClient);
         }
+        try {
+            conn.commit();
+            }catch(SQLException e) {
+                System.err.println("failed");
+                e.printStackTrace(System.err);
+            }
         System.out.println("Paiement en ligne ou non : ");
         System.out.println("Taper true or false : ");
         boolean paiementligne = scan.nextBoolean();
