@@ -43,6 +43,8 @@ public class StatementCommande{
 
     static final String STVERIFIEEMAILEXIST = "select * from Client where emailClient = ?";
 
+    static final String STVERIFIEIDCOMMANDE = "select * from Commande where idCommande = ?";
+
     static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme";
 
     static final String STNBIDCOMMANDE = "SELECT COUNT(*) FROM Commande";
@@ -263,6 +265,27 @@ public class StatementCommande{
             return false;
         }
     }
+    public boolean verifieIdCommande(int idCommande){
+    // Verifie que l'idCommande existe dans la base
+        try{
+            PreparedStatement stmt = conn.prepareStatement(STVERIFIEIDCOMMANDE);
+            stmt.setInt(1, idCommande);
+            ResultSet rset = stmt.executeQuery();
+            if (rset.next()){
+                rset.close();
+                stmt.close();
+                return true;
+            }else{
+                rset.close();
+                stmt.close();
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }
     public boolean verfieIdContenant(int idContenant){
     // Verifie que l'idContenant existe dans la base de données.
         try{
@@ -330,7 +353,10 @@ public class StatementCommande{
         PreparedStatement stmt = conn.prepareStatement(STNBIDCOMMANDE);
         ResultSet rset = stmt.executeQuery();
         rset.next();
-        int nbCommande = rset.getInt(1) + 7;
+        int nbCommande = rset.getInt(1);
+        while (this.verifieIdCommande(nbCommande)){
+            nbCommande +=1;
+        }
         rset.close();
         stmt.close();
         return nbCommande;

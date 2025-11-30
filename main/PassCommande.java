@@ -307,13 +307,13 @@ public class PassCommande{
             String dateLivraison = scan.nextLine();
             String[] argsLivraison = {dateLivraison,adresse};
             String [] argsCommande = {ModePaiement,ModeRecuperation};
-            idCommande = statementcomm.nbIdCommande() + 120;
+            idCommande = statementcomm.nbIdCommande();
             statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeLivrer(idCommande, fraisLivraison, argsLivraison);
         } else{
             ModeRecuperation = "Retrait";
             String [] argsCommande = {ModePaiement,ModeRecuperation};
-            idCommande = statementcomm.nbIdCommande() + 1000;
+            idCommande = statementcomm.nbIdCommande();
             statementcomm.creeCommande(idCommande, idClient, argsCommande);
             statementcomm.commandeBoutique(idCommande);
         }
@@ -509,7 +509,7 @@ public class PassCommande{
                    double PoidsUnitaire = commandeP.getPoidsUnitaire();
                    double nwprix = statementcomm.retourneprixGlobalCommandeP(agrsCommandeP, ModeConditionnement, nvQte, PoidsUnitaire);
                    CommandeProduit nwCommandeP = new CommandeProduit(agrsCommandeP, nvQte,nwprix,ModeConditionnement, PoidsUnitaire);
-                   panierCommandePCommande.add(nwCommandeP);
+                   panierCommandePCommande.add(iAchanger - panierCommandeP.size() - 1,nwCommandeP);
                    System.out.println("Maintenant cette commande vous coutera " + nwprix);
                 } else{
                     CommandeProduit commandeP = panierCommandeP.get(iAchanger - 1);
@@ -549,7 +549,7 @@ public class PassCommande{
                         panierCommandeP.remove(iAchanger - 1);
                         double nwprix = statementcomm.retournePrixCommandeP(agrsCommandeP, ModeConditionnement, nvQte, PoidsUnitaire);
                         CommandeProduit nwCommandeP = new CommandeProduit(agrsCommandeP, nvQte, nwprix,ModeConditionnement, PoidsUnitaire);
-                        panierCommandeP.add(nwCommandeP);
+                        panierCommandeP.add(iAchanger-1,nwCommandeP);
                         System.out.println("Maintenant cette commande vous coutera " + nwprix);
                     }
                 }
@@ -582,7 +582,7 @@ public class PassCommande{
                 boolean dispo = statementcomm.getDispoContenant(idContenant, nvQteC);
                 while (!dispo){
                         System.out.println("╔══════════════════════════════════════╗");
-                        System.out.println("║ ⚠️  ATTENTION                        ║");
+                        System.out.println("║ ⚠️  ATTENTION                         ║");
                         System.out.println("╠══════════════════════════════════════╣");
                         System.out.println("║ Hehe... Vous pensiez qu'on n'allait  ║");
                         System.out.println("║ pas revérifier la quantité ?         ║");
@@ -611,7 +611,7 @@ public class PassCommande{
                         double nwprixC = statementcomm.retournePrixCommandeC(agrsCommandeC, nvQteC);
                         System.out.println("Maintenant cette commande vous coutera " + nwprixC);
                         Commande nwCommandeC = new Commande(agrsCommandeC, nvQteC,nwprixC);
-                        panierCommandeC.add(nwCommandeC);
+                        panierCommandeC.add(iAchangerC -1,nwCommandeC);
                     } 
             }      
     
