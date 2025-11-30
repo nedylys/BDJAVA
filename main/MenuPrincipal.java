@@ -58,6 +58,31 @@ public class MenuPrincipal {
                 e.printStackTrace(System.err);
             }
         }
+
+        public void afficherProduits(Scanner scanner){
+            // Clear le terminal
+            try {
+                new ProcessBuilder("clear").inheritIO().start().waitFor();
+            } catch (Exception e) {
+                System.out.println("[!] Impossible de clear le terminal");
+            }
+            try {
+                System.out.println("\n============================================ 📝🛒 Produits disponible  ========================================");
+                System.out.println("\n");
+    
+                // Creation de la requete
+                PreparedStatement stmt = connection.prepareStatement(Statement.PRE_STMT_COMMANDE);
+                // Execution de la requete
+                ResultSet rset = stmt.executeQuery();
+                // Affichage du resultat
+                dumpResultSet(rset);
+            } catch (Exception e) {
+                System.err.println("Erreur lors de l'affichage des produits.");
+                e.printStackTrace(System.err);
+                
+            /// 
+            }
+        }
         public void afficherCatalogue(Scanner scanner, int choix) {
             // Clear le terminal
             try {
@@ -92,7 +117,7 @@ public class MenuPrincipal {
                     default -> {
                         System.out.println("Choix invalide, veuillez réessayer.🤕");
                         try {
-                            Thread.sleep(1000); // 1000 ms = 1 seconde
+                            Thread.sleep(5000); // 1000 ms = 1 seconde
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }                        
@@ -182,7 +207,7 @@ public class MenuPrincipal {
                         default -> {
                             System.out.println("Choix invalide, veuillez réessayer.🤕");
                             try {
-                                Thread.sleep(1000); // 1000 ms = 1 seconde
+                                Thread.sleep(5000); // 1000 ms = 1 seconde
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                             }                        

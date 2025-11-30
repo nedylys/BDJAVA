@@ -39,6 +39,39 @@ public class Statement{
         AND (REMISE_APPLIQUEE = 0 OR REMISE_APPLIQUEE IS NULL)
     """;
         
+    static final String PRE_STMT_COMMANDE = """
+        SELECT 
+            l.idproduit,
+            p.IDPRODUCTEUR,
+            l.modeconditionnement,
+            p.nomproduit,
+            p.categorieproduit,
+            l.poidsUnitaire,
+            SUM(l.quantitedisponiblep) AS QuantiteDisponible,
+            TO_CHAR(ps.DateDebut, 'DD/MM/YYYY') || ' - ' || TO_CHAR(ps.DateFin, 'DD/MM/YYYY') AS Saison_Disponibilite
+        FROM lotproduit l
+        JOIN produit p 
+            ON l.idproduit = p.idproduit
+        JOIN ProduitAPourSaison ps 
+            ON p.IdProduit = ps.IdProduit
+        GROUP BY 
+            l.idproduit,
+            p.IDPRODUCTEUR,
+            l.modeconditionnement,
+            p.nomproduit,
+            p.categorieproduit,
+            l.poidsUnitaire,
+            ps.DateDebut,
+            ps.DateFin
+        ORDER BY 
+            l.idproduit ASC
+    """;
+    // Dans la classe Statement.java
+    static final String AFFICHER_CONTENANTS = """
+        SELECT *
+        FROM Contenant 
+        ORDER BY idContenant ASC
+    """;
     //   l.DATERÉCEPTIONP,
 
     
