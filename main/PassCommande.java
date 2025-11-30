@@ -19,6 +19,7 @@ public class PassCommande{
     private ArrayList<Integer> idProduitUtilise;
     private ArrayList<Integer> idContenantUtilise;
     private ArrayList<Savepoint> listSavePoint;
+    private Savepoint sp;
 
     public PassCommande(Connection conn,Scanner scan,MenuPrincipal menu){
         System.out.println("---------------- ⚠️  ATTENTION ⚠️  ----------------");
@@ -30,6 +31,14 @@ public class PassCommande{
         System.out.println("En raison de la concurrence, certains produits peuvent être temporairement verrouillés lorsque vous essayez de finaliser la commande.");
         System.out.println("Veuillez réessayer si nécessaire.");
         System.out.println("--------------- ⚡ ATTENTION ⚡ ---------------");
+        System.out.println("         ");
+        System.out.println("--------------- 🔁 INFORMATION 🔁 ---------------");
+        System.out.println("Pour revenir au menu principal :");
+        System.out.println("- Si vous êtes en train de saisir un texte, tapez \"back\".");
+        System.out.println("- Si vous devez entrer un nombre, saisissez -1.");
+        System.out.println("Pour les boolean, pas de règles : true ou false… choisissez à l’aveugle !");
+        System.out.println("Chaque choix compte, alors réfléchissez bien avant de cliquer…");
+        System.out.println("--------------------------------------------------");
         this.conn = conn;
         this.scan = scan;
         this.statementcomm = new StatementCommande(conn,scan);
@@ -54,6 +63,7 @@ public class PassCommande{
     public void beginCommande(){
         int numchoisi = scan.nextInt();
         scan.nextLine();
+        clearConsole();
         if (numchoisi == 1 ){
             commandeProduit();
         }
@@ -72,10 +82,8 @@ public class PassCommande{
             retour();
         }
     }
-    public void enregistrerClient(){
-
-    }
     public void commandeProduit(){
+        this.afficherResumePanier();
         System.out.println("Entrer l'idProduit : ");
         int idProduit = scan.nextInt();
         scan.nextLine();
@@ -110,26 +118,32 @@ public class PassCommande{
             }
         System.out.println("Modes de Conditionnement disponibles : ");
         statementcomm.getModeConditionnement(idProduit);
-        System.out.println("Entrer le Mode de Conditionnement : ");
+        System.out.println("Entrer le Mode de Conditionnement (Tapez p ou v) : ");
         String ModeConditionnement = scan.nextLine();
+        revenirArriere(ModeConditionnement);
         double PoidsUnitaire;
-        while (!(ModeConditionnement.equals("vrac")) && !(ModeConditionnement.equals("preconditionne"))){
+        while (!(ModeConditionnement.equals("p")) && !(ModeConditionnement.equals("v"))){
             System.out.println("Mauvaise saisie ");
             System.out.println("Entrer le Mode de Conditionnement : ");
             ModeConditionnement = scan.nextLine();
+            revenirArriere(ModeConditionnement);
         }
-        if (ModeConditionnement.equals("vrac")){
+        if (ModeConditionnement.equals("v")){
+            ModeConditionnement = "vrac";
             PoidsUnitaire = 1.0;
         }else{
+            ModeConditionnement = "preconditionne";
             System.out.println("Les poidsUnitaire disponibles : ");
             statementcomm.choisirPoidsUnitaire(idProduit);
             System.out.println("Entrer le poids unitaire :");
             PoidsUnitaire = scan.nextDouble();
             scan.nextLine();
+            revenirArriere((int) PoidsUnitaire);
         }
         System.out.println("Entrer la quantité souhaitée : ");
         double qte = scan.nextDouble();
         scan.nextLine();
+        revenirArriere((int) qte);
         boolean commande = statementcomm.inCommande(idProduit);
         if (commande){
             System.out.println("Votre produit est sur commande ");
@@ -188,11 +202,12 @@ public class PassCommande{
         beginCommande();
     }
     public void commandeContenant(){
+        this.afficherResumePanier();
         System.out.println("Entrer l'idContenant : ");
         int idContenant = scan.nextInt();
         scan.nextLine();
         if (idContenantUtilise.contains(idContenant)){
-            System.out.println("Vous avez déja commmandé ce contenant");
+            System.out.println("Vous avez déja commmandé ce contenant !");
             System.out.println("Vous pouvez changer sa quantité en appuyant sur 6");
             System.out.println(" 1 : Recommander un Produit ");
             System.out.println(" 2 : Commander un Contenant");
@@ -203,7 +218,6 @@ public class PassCommande{
             System.out.println(" 7 : Retour au menu prinicipal");
             System.out.println("Taper le numéro choisi:");
             beginCommande();
-
         }
         if (!(statementcomm.verfieIdContenant(idContenant))){
             System.out.println("L'idContenant est faux");
@@ -213,6 +227,7 @@ public class PassCommande{
         System.out.println("Entrer la quantité souhaitée : ");
         int qte = scan.nextInt();
         scan.nextLine();
+        revenirArriere(qte);
         boolean dispo = statementcomm.getDispoContenant(idContenant, qte);
         if (!dispo){
             commandeContenant();
@@ -242,6 +257,13 @@ public class PassCommande{
         beginCommande();
     }
     public void finalCommande(){
+        this.afficherResumePanier();
+        System.out.println("  ");
+        System.out.println("⚠️ Attention : si vous avez déjà ajouté un client ou une adresse,");
+        System.out.println("cela reste irréversible, même si vous revenez au menu principal !");
+        System.out.println("Donc, réfléchissez bien avant de cliquer… on n’a pas encore inventé la machine à remonter le temps ⏳😅");
+        System.out.println("--------------------------------------------------");
+        System.out.println("  ");
         System.out.println("Entrer l'email du client : ");
         String emailClient = scan.nextLine();
         boolean nvclient = !(statementcomm.verifieEmailExist(emailClient));
@@ -251,10 +273,13 @@ public class PassCommande{
             idClient = statementcomm.nbClient();
             System.out.println("Entrer le Nom du client : ");
             String nom = scan.nextLine();
+            revenirArriere(nom);
             System.out.println("Entrer le Prenom du client : ");
             String prenom = scan.nextLine();
+            revenirArriere(prenom);
             System.out.println("Entrer le numéro de telephone du client : ");
             String numtelephone = scan.nextLine();
+            revenirArriere(numtelephone);
             String[] agrsClient = {emailClient,nom,prenom,numtelephone};
             statementcomm.ajouteNovClient(agrsClient, idClient);
         } else {
@@ -300,17 +325,33 @@ public class PassCommande{
                statementcomm.ajouteNovAdresseClient(adresse, emailClient);
             } else{
                 ArrayList<String> adresseArray = statementcomm.getAdresseClient(emailClient);
-                System.out.println("Choisisez l'addresse de livraison : ");
-                int numchoisi = scan.nextInt();
-                scan.nextLine();
-                adresse = adresseArray.get(numchoisi - 1);
+                if (adresseArray.size() == 0){
+                    System.out.println("Ce client n'a aucune adresse");
+                    System.out.println("Veuillez entrer une adresse : ");
+                    adresse = scan.nextLine();
+                    statementcomm.ajouteNovAdresseClient(adresse, emailClient);
+                } else{
+                    System.out.println("Choisisez l'addresse de livraison : ");
+                    int numchoisi = scan.nextInt();
+                    scan.nextLine();
+                    revenirArriere(numchoisi);
+                    adresse = adresseArray.get(numchoisi - 1);
+                }
+            }
+            try {
+            conn.commit();
+            }catch(SQLException e) {
+                System.err.println("failed");
+                e.printStackTrace(System.err);
             }
             System.out.println("Entrer les frais de livraison éventuels : ");
             double fraisLivraison = scan.nextDouble();
             scan.nextLine();
+            revenirArriere((int) fraisLivraison);
             System.out.println("Entrer la date de livraison  : ");
             System.out.println("L'écrire en format YYYY-MM-DD : ");
             String dateLivraison = scan.nextLine();
+            revenirArriere(dateLivraison);
             String[] argsLivraison = {dateLivraison,adresse};
             String [] argsCommande = {ModePaiement,ModeRecuperation};
             idCommande = statementcomm.nbIdCommande();
@@ -339,11 +380,43 @@ public class PassCommande{
              double qteP = commandeP.getQte();
              String ModedeConditionnement = commandeP.getModeConditionnement();
              double PoidsUnitaire = commandeP.getPoidsUnitaire();
+             double nwQteP = qteP;
              boolean islockedP = statementcomm.lockP(argsCommandeP[2],ModedeConditionnement,PoidsUnitaire);
-             if (islockedP){
-                statementcomm.ajouteCommandeGlobalP(argsCommandeP, ModedeConditionnement, qteP, PoidsUnitaire);
-                nbLigneP += argsCommandeP[0] + 1;
-                this.prixCommande += prixP;
+             if (islockedP){      
+                boolean abondonP = false;
+                boolean isQteDispoP = statementcomm.getDispo(argsCommandeP[2], qteP, ModedeConditionnement, PoidsUnitaire);          
+                while (!isQteDispoP){
+                    System.out.println("--------------- ⚡ INFORMATION ⚡ ---------------");
+                    System.out.println("Nous sommes désolés, la quantité est devenue insuffisante.");
+                    System.out.println("(L'autre client est un peu gourmand...)");
+                    System.out.println("Vous pouvez soit modifier la quantité, soit abandonner la commande de ce produit.");
+                    System.out.println("--------------- ⚡ INFORMATION ⚡ ---------------");
+                    System.out.println("    ");
+                    System.out.println("1. Changer la quantité");
+                    System.out.println("2. Abondonner la commande");
+                    int choixnwQteDispo = scan.nextInt();
+                    scan.nextLine();
+                    revenirArriere(choixnwQteDispo);
+                    if (choixnwQteDispo == 1){
+                        System.out.println("Entrer la nouvelle quantité");
+                        System.out.println("(Inutile d’insister en entrant une quantité trop grande , elle sera toujours vérifiée automatiquement.)");
+                        nwQteP = scan.nextDouble();
+                        scan.nextLine();
+                        revenirArriere((int) nwQteP);
+                        isQteDispoP = statementcomm.getDispo(argsCommandeP[2],nwQteP,ModedeConditionnement,PoidsUnitaire);
+                    }else{
+                        isQteDispoP = true;
+                        abondonP = true;
+                    }
+                }
+                if (!abondonP){
+                    prixP = statementcomm.retournePrixCommandeP(argsCommandeP, ModedeConditionnement, nwQteP, PoidsUnitaire);
+                    statementcomm.ajouteCommandeGlobalP(argsCommandeP, ModedeConditionnement, nwQteP, PoidsUnitaire);
+                    nbLigneP += argsCommandeP[0] + 1; 
+                    System.out.println("Maintenant la commande vous coutera " + prixP);
+                    this.prixCommande+= prixP; 
+                } 
+
              }
         }
         for (CommandeProduit commandeP : panierCommandePCommande){
@@ -365,10 +438,39 @@ public class PassCommande{
              double prixC = commandeC.getPrix();
              double qteC = commandeC.getQte();
              boolean islockedC = statementcomm.lockC(argsCommandeC[2]);
+             int nwQteC = (int) qteC;
              if (islockedC){
-                statementcomm.ajouteCommandeGlobalC(argsCommandeC,(int) qteC);
-                nbLigneC += argsCommandeC[0] + 1; 
-                this.prixCommande+= prixC; 
+                boolean isQteDispo = statementcomm.getDispoContenant(argsCommandeC[2], (int) qteC);
+                boolean abondonC = false;
+                while (!isQteDispo){
+                    System.out.println("--------------- ⚡ INFORMATION ⚡ ---------------");
+                    System.out.println("Nous sommes désolés, la quantité est devenue insuffisante.");
+                    System.out.println("(L'autre client est un peu gourmand...)");
+                    System.out.println("Vous pouvez soit modifier la quantité, soit abandonner la commande de ce contenant.");
+                    System.out.println("--------------- ⚡ INFORMATION ⚡ ---------------");
+                    System.out.println("    ");
+                    System.out.println("1. Changer la quantité");
+                    System.out.println("2. Abondonner la commande");
+                    int choixnwQteDispo = scan.nextInt();
+                    scan.nextLine();
+                    if (choixnwQteDispo == 1){
+                        System.out.println("Entrer la nouvelle quantité");
+                        System.out.println("(Inutile d’insister en entrant une quantité trop grande , elle sera toujours vérifiée automatiquement.)");
+                        nwQteC = scan.nextInt();
+                        scan.nextLine();
+                        isQteDispo = statementcomm.getDispoContenant(argsCommandeC[2], (int) qteC);
+                    }else{
+                        isQteDispo = true;
+                        abondonC = true;
+                    }
+                }
+                if (!abondonC){
+                    prixC = statementcomm.retournePrixCommandeC(argsCommandeC, nwQteC); 
+                    statementcomm.ajouteCommandeGlobalC(argsCommandeC,nwQteC);
+                    nbLigneC += argsCommandeC[0] + 1; 
+                    System.out.println("Maintenant la commande vous coutera " + prixC);
+                    this.prixCommande+= prixC; 
+                } 
              }
         }
         panierCommandeP.clear();
@@ -380,13 +482,14 @@ public class PassCommande{
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 7 : Retour au menu prinicipal");
         System.out.println("Taper le numéro choisi:");
-        System.out.println("La commande a bien été créee");
         beginCommande();
     }
     public void annuleCommande(){
+        this.afficherResumePanier();
         panierCommandeP.clear();
         panierCommandeC.clear();
         panierCommandePCommande.clear();
+        this.afficherResumePanier();
         System.out.println("La commande a bien été annulée !");
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
@@ -399,6 +502,7 @@ public class PassCommande{
         beginCommande();
     }
     public void viderPanier(){
+        this.afficherResumePanier();
         System.out.println("Voulez vous modifier le panier Produit");
         System.out.println("Tapez 0(non) ou 1(oui) ");
         int choixPanierP = scan.nextInt();
@@ -427,10 +531,12 @@ public class PassCommande{
             }
             System.out.println("Combien de produits voulez vous supprimer ?");
             int nP = scan.nextInt();
+            scan.nextLine();
             System.out.println("Taper successivement le numéro des lignes que vous voulez enlever du panier");
             for (int j = 0; j<nP;j++){
                 int iAjeter = scan.nextInt();
                 scan.nextLine();
+                revenirArriere(iAjeter);
                 if (iAjeter > panierCommandeP.size()){
                    panierCommandePCommande.remove(iAjeter - panierCommandeP.size() - 1);
                 } else{
@@ -443,6 +549,7 @@ public class PassCommande{
         System.out.println("Tapez 0(non) ou 1(oui) ");
         int choixPanierC = scan.nextInt();
         scan.nextLine();
+        revenirArriere(choixPanierC);
         if (choixPanierC == 1){
             int iC = 0;
             for (Commande c : panierCommandeC){
@@ -453,13 +560,17 @@ public class PassCommande{
             }
             System.out.println("Combien de Contenants voulez vous supprimer ?");
             int nC = scan.nextInt();
+            scan.nextLine();
+            revenirArriere(nC);
             System.out.println("Taper successivement le numéro des lignes que vous voulez enlever du panier");
             for (int j = 0; j<nC;j++){
                 int iAjeterC = scan.nextInt();
                 scan.nextLine();
+                revenirArriere(nC);
                 panierCommandeC.remove(iAjeterC-1);
             }
         }
+        this.afficherResumePanier();
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -471,10 +582,12 @@ public class PassCommande{
         beginCommande();
     }
     public void changeQtePC(){
+       this.afficherResumePanier();
        System.out.println("Voulez vous changer la quatité d'un produit ?");
        System.out.println("Tapez 0(non) ou 1(oui) ");
         int choixP = scan.nextInt();
         scan.nextLine();
+        revenirArriere(choixP);
         if (choixP == 1){
             int ip = 0;
             for (CommandeProduit p : panierCommandeP){
@@ -499,14 +612,18 @@ public class PassCommande{
             }
             System.out.println("Combien de commandes Produit voulez vous changer ?");
             int nP = scan.nextInt();
+            scan.nextLine();
+            revenirArriere(nP);
             System.out.println("Tapez successivement le numéro de la ligne que vous voulez changer avec la nouvelle quantité");
             for (int j = 0; j<nP;j++){
                 System.out.println("Entrer le numéro de la ligne : ");
                 int iAchanger = scan.nextInt();
                 scan.nextLine();
+                revenirArriere(iAchanger);
                 System.out.println("Entrer la nouvelle quantité : ");
                 double nvQte = scan.nextDouble();
                 scan.nextLine();
+                revenirArriere((int) nvQte);
                 if (iAchanger > panierCommandeP.size()){
                    CommandeProduit commandeP = panierCommandePCommande.get(iAchanger - 1 - panierCommandeP.size());
                    panierCommandePCommande.remove(iAchanger - panierCommandeP.size() - 1);
@@ -544,6 +661,7 @@ public class PassCommande{
                             System.out.println("Entrer la nouvelle quantité : ");
                             nvQte = scan.nextDouble();
                             scan.nextLine();
+                            revenirArriere((int) nvQte);
                             dispo = statementcomm.getDispo(idProduit, nvQte, ModeConditionnement, PoidsUnitaire);
                         } else{
                             dispo = true;
@@ -565,6 +683,7 @@ public class PassCommande{
         System.out.println("Tapez 0(non) ou 1(oui) ");
         int choixC = scan.nextInt();
         scan.nextLine();
+        revenirArriere(choixC);
         if (choixC == 1){
             int ic = 0;
             for (Commande c : panierCommandeC){
@@ -574,6 +693,8 @@ public class PassCommande{
             }
             System.out.println("Combien de commandes Contenant voulez vous changer ?");
             int nC = scan.nextInt();
+            scan.nextLine();
+            revenirArriere(nC);
             System.out.println("Tapez successivement le numéro de la ligne que vous voulez changer avec la nouvelle quantité");
             for (int j = 0; j<nC;j++){
                 System.out.println("Entrer le numéro de la ligne : ");
@@ -605,6 +726,7 @@ public class PassCommande{
                         if (choixQteC == 1){
                             nvQteC = scan.nextInt();
                             scan.nextLine();
+                            revenirArriere(nvQteC);
                             dispo = statementcomm.getDispoContenant(idContenant, nvQteC);
                         } else{
                             dispo = true;
@@ -622,6 +744,7 @@ public class PassCommande{
             }      
     
         }
+        this.afficherResumePanier();
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Commander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -634,13 +757,31 @@ public class PassCommande{
     }
     
     public void retour(){
+        clearConsole();
         menu.afficherMenu();
     }
+    public void revenirArriere(String str){
+        if (str.equals("back")){
+           menu.afficherMenu();
+        }        
+    }
+    public void revenirArriere(int entier){
+        if (entier == -1){
+           menu.afficherMenu();
+        }        
+    }
 
+    
     private void afficherResumePanier() {
         System.out.println("--- PANIER ACTUEL ---");
-        System.out.println(panierCommandeP.size() + " Produits | " + panierCommandeC.size() + " Contenants");
-        System.out.println("Total estimé : " + String.format("%.2f", prixCommande) );
+        System.out.println(panierCommandeP.size()+panierCommandePCommande.size() + " Produits | " + panierCommandeC.size() + " Contenants");
         System.out.println("---------------------");
+    }
+    public static void clearConsole() {
+    try {
+        new ProcessBuilder("clear").inheritIO().start().waitFor();
+    } catch (Exception e) {
+        System.out.println(e);
+      }  
     }
 }

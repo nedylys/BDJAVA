@@ -17,7 +17,7 @@ public class StatementCommande{
 
     static final String STVerifieIDContenant = "select idContenant from Contenant where idContenant = ?"; 
 
-    static final String STVERIFPOIDS = "select PoidsUnitaire from LotProduit where idProduit = ? and ModeConditionnement = 'preconditionne'"; 
+    static final String STVERIFPOIDS = "select DISTINCT PoidsUnitaire from LotProduit where idProduit = ? and ModeConditionnement = 'preconditionne'"; 
 
     static final String STQteStock = "select sum(PoidsUnitaire*QuantiteDisponibleP) from LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? and DatePeremption >= TO_DATE(?, 'YYYY-MM-DD')";
     
@@ -44,6 +44,8 @@ public class StatementCommande{
     static final String STVERIFIEEMAILEXIST = "select * from Client where emailClient = ?";
 
     static final String STVERIFIEIDCOMMANDE = "select * from Commande where idCommande = ?";
+
+    static final String STVERIFIEIDCLIENT = "select * from Client where idClient = ?";
 
     static final String STNBIDCLIENT = " SELECT COUNT(*) FROM ClientAnonyme";
 
@@ -75,7 +77,6 @@ public class StatementCommande{
 
     static final String STLOCKC = "SELECT * FROM LOTCONTENANT where idContenant = ? FOR UPDATE WAIT 30";
     
-    static final String STLOCKTIME = "ALTER SESSION SET ddl_lock_timeout = 5s";
     
     private Connection conn;
 
@@ -308,6 +309,27 @@ public class StatementCommande{
             return false;
         } 
     }
+    public boolean verfieIdClient(int idClient){
+    // Verifie que l'idContenant existe dans la base de données.
+        try{
+            PreparedStatement stmt = conn.prepareStatement(STVERIFIEIDCLIENT);
+            stmt.setInt(1, idClient);
+            ResultSet rset = stmt.executeQuery();
+            if (rset.next()){
+                rset.close();
+                stmt.close();
+                return true;
+            }else{
+                rset.close();
+                stmt.close();
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("failed");
+            e.printStackTrace(System.err);
+            return false;
+        } 
+    }
     public boolean getDispoContenant(int idContenant,int quantite){
     // Verfie si le contenant peut être obtenu
     try{
@@ -338,6 +360,9 @@ public class StatementCommande{
         ResultSet rset = stmt.executeQuery();
         rset.next();
         int nbIdclient = rset.getInt(1);
+        while (this.verfieIdClient(nbIdclient)){
+            nbIdclient += 1; // Afin d'éviter les problèmes
+        }
         rset.close();
         stmt.close();
         return nbIdclient;
@@ -499,17 +524,21 @@ public class StatementCommande{
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
+        int nbAjout = 0;
         if (!verifieAdresseExist(adresseClient)){
             stmt.setString(1,adresseClient);
+            nbAjout = stmt.executeUpdate();
+            System.out.println("Nouvelle adresse dans la base !");
+        } else{
+            System.out.println("Cette adresse existe déja dans la base !");
         }
         stmt2.setString(1,emailClient);
         stmt2.setString(2, adresseClient);
-        int nbAjout = stmt.executeUpdate();
         int nbAjout2 = stmt2.executeUpdate();
         if (nbAjout2 + nbAjout == 2){
             System.out.println("L'adresse a bien été ajoutée ");
         }else{
-            System.out.println("Echec de l'ajout");
+            //System.out.println("Echec de l'ajout");
         }
         stmt.close();
         stmt2.close();
@@ -874,16 +903,5 @@ public boolean lockC(int idContenant) {
         System.out.println(); 
         return false;
     }
-}
-    public void setLocktime(){
-        try{
-            PreparedStatement stmtLockTime = conn.prepareStatement(STLOCKTIME);
-            stmtLockTime.executeUpdate();
-            stmtLockTime.close(); 
-              }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-      }
-    }
-           
+}           
 }
