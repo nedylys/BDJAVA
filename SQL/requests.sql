@@ -127,10 +127,14 @@ SELECT l.idproduit, p.IDPRODUCTEUR, l.modeconditionnement, p.nomproduit, p.categ
 SELECT * FROM Contenant ORDER BY idContenant ASC;
 
 -- ClotureCommande.java
+-- Récupère les commandes en cours (ni livrées ni annulées).
 SELECT DISTINCT c.idCommande, c.idClient, c.ModeRecuperation FROM commande c, commandeenboutique, commandealivrer WHERE (c.idCommande = commandeenboutique.idCommande OR c.idCommande = commandealivrer.idCommande) AND (commandeenboutique.statutcommandeb != 'Recuperee' AND commandeenboutique.statutcommandeb != 'Annulee' AND commandealivrer.statutcommandel != 'Livree' AND commandealivrer.statutcommandel != 'Annulee');
+-- Modification du statut d'une commande en boutique.
 Update Commandeenboutique set StatutCommandeB = 'Annulee' where idCommande = ?;
+-- Récupération du statut avant modification.
 Select StatutCommandeB from Commandeenboutique where idCommande = ?;
 Update Commandeenboutique set StatutCommandeB = ? where idCommande = ?;
+-- Deduction du stock lors de la cloture d'une commande 
 UPDATE LotProduit SET QuantiteDisponibleP = QuantiteDisponibleP - (SELECT QuantiteCommandeeP FROM LigneCommandeProduit WHERE idCommande = ? AND LigneCommandeProduit.idProduit = LotProduit.idProduit AND LigneCommandeProduit.DateReceptionP = LotProduit.DateReceptionP AND LigneCommandeProduit.ModeConditionnement = LotProduit.ModeConditionnement AND LigneCommandeProduit.PoidsUnitaire = LotProduit.PoidsUnitaire) WHERE EXISTS (SELECT 1 FROM LigneCommandeProduit WHERE idCommande = ? AND LigneCommandeProduit.idProduit = LotProduit.idProduit AND LigneCommandeProduit.DateReceptionP = LotProduit.DateReceptionP AND LigneCommandeProduit.ModeConditionnement = LotProduit.ModeConditionnement AND LigneCommandeProduit.PoidsUnitaire = LotProduit.PoidsUnitaire);
 UPDATE LotContenant SET QuantiteDisponibleC = QuantiteDisponibleC - (SELECT QuantiteCommandeeC FROM LigneCommandeContenant WHERE idCommande = ? AND LigneCommandeContenant.idContenant = LotContenant.idContenant AND LigneCommandeContenant.DateReceptionC = LotContenant.DateReceptionC) WHERE EXISTS (SELECT 1 FROM LigneCommandeContenant WHERE idCommande = ? AND LigneCommandeContenant.idContenant = LotContenant.idContenant AND LigneCommandeContenant.DateReceptionC = LotContenant.DateReceptionC);
 Update CommandeaLivrer set StatutCommandeL = 'Annulee' where idCommande = ?;
@@ -138,9 +142,12 @@ Select StatutCommandeL from CommandeaLivrer where idCommande = ?;
 UPDATE CommandeaLivrer SET StatutCommandeL = ? WHERE idCommande = ?;
 UPDATE Commandeenboutique SET StatutCommandeB = ? WHERE idCommande = ?;
 UPDATE CommandeaLivrer SET StatutCommandeL = ? WHERE idCommande = ?;
+-- Restauration du stock lors de l'annulation d'une commande
 UPDATE LotProduit SET QuantiteDisponibleP = QuantiteDisponibleP + (SELECT QuantiteCommandeeP FROM LigneCommandeProduit WHERE idCommande = ? AND LigneCommandeProduit.idProduit = LotProduit.idProduit AND LigneCommandeProduit.DateReceptionP = LotProduit.DateReceptionP AND LigneCommandeProduit.ModeConditionnement = LotProduit.ModeConditionnement AND LigneCommandeProduit.PoidsUnitaire = LotProduit.PoidsUnitaire) WHERE EXISTS (SELECT 1 FROM LigneCommandeProduit WHERE idCommande = ? AND LigneCommandeProduit.idProduit = LotProduit.idProduit AND LigneCommandeProduit.DateReceptionP = LotProduit.DateReceptionP AND LigneCommandeProduit.ModeConditionnement = LotProduit.ModeConditionnement AND LigneCommandeProduit.PoidsUnitaire = LotProduit.PoidsUnitaire);
 UPDATE LotContenant SET QuantiteDisponibleC = QuantiteDisponibleC + (SELECT QuantiteCommandeeC FROM LigneCommandeContenant WHERE idCommande = ? AND LigneCommandeContenant.idContenant = LotContenant.idContenant AND LigneCommandeContenant.DateReceptionC = LotContenant.DateReceptionC) WHERE EXISTS (SELECT 1 FROM LigneCommandeContenant WHERE idCommande = ? AND LigneCommandeContenant.idContenant = LotContenant.idContenant AND LigneCommandeContenant.DateReceptionC = LotContenant.DateReceptionC);
 
 
--- SuiviCommande.java
-SELECT * from CommandeaLivrer WHERE idCommande = ?;
+-- Gestion de pertes :
+-- deduction des quantités perdues du stock
+UPDATE LotProduit SET QuantiteDisponibleP = QuantiteDisponibleP - ? WHERE idProduit=? AND DateReceptionP=? AND ModeConditionnement=? AND PoidsUnitaire=? ;
+UPDATE LotContenant SET QuantiteDisponibleC = QuantiteDisponibleC - ? WHERE idContenant=? AND DateReceptionC=?;
