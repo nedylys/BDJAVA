@@ -55,7 +55,7 @@ public class StatementCommande{
 
     static final String STNBLIGNEC = "SELECT COUNT(*) FROM LigneCommandeContenant";
 
-    static final String STNVCOMMANDE = " INSERT INTO Commande VALUES(?,TO_DATE(?, 'YYYY-MM-DD'),TO_DATE(?, 'HH24:MI:SS'),?,?,?,null)";
+    static final String STNVCOMMANDE = " INSERT INTO Commande VALUES(?,TO_DATE(?, 'YYYY-MM-DD'),TO_DATE(?, 'HH24:MI:SS'),?,?,?)";
 
     static final String STNVLIGNEP = " INSERT INTO LigneCommandeProduit VALUES(?,?,?,?,?,TO_DATE(?, 'YYYY-MM-DD'),?,?,?) ";
 
@@ -672,6 +672,9 @@ public class StatementCommande{
         while(quantiteP > 0 && rset.next()){
             argsCommandeP[0]++;
             double qtedispo = rset.getDouble(3);
+            if (qtedispo == 0){
+                continue;
+            }
             double prix = rset.getDouble(1);
             java.util.Date date = rset.getDate(2);
             String actualDate = sdf.format(date);
@@ -798,6 +801,9 @@ public class StatementCommande{
         while(quantiteC > 0 && rset.next()){
             argsCommandeC[0]++;
             int qtedispo = rset.getInt(2);
+            if (qtedispo == 0){
+                continue;
+            }
             double prix = rset.getDouble(3);
             java.util.Date date = rset.getDate(1);
             String actualDate = sdf.format(date);

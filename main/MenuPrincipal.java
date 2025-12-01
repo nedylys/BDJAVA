@@ -49,11 +49,9 @@ public class MenuPrincipal {
                     case 4 -> consulterAlertes(scanner,choix);
                     case 5 -> cloturerUneCommande();
                     case 6 -> gestionPertes();
-                    case 7 -> System.out.println("Au revoir !");
-                    default -> System.out.println("Choix invalide, veuillez réessayer.");
-                }
+                    case 7 -> quitter();
             }
-            catch (Exception e) {
+        }catch (Exception e) {
                 System.err.println("Failed !.");
                 e.printStackTrace(System.err);
             }
@@ -554,6 +552,18 @@ public class MenuPrincipal {
             System.out.println("=".repeat(totalWidth));
             return hasResults;
         }
+        public void quitter(){
+        System.out.println("Au revoir !");
+                    if (connection != null) {
+                        try {
+                            connection.close();  // Close the connection
+                            System.out.println("Connection closed.");
+                            System.exit(0); 
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            }
     }
     
     
