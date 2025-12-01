@@ -4,7 +4,7 @@
 -- ============================================================
 
 
-DROP TABLE ProducteurAPourActivité;
+DROP TABLE Producteurapouractivite;
 DROP TABLE Producteur;
 DROP TABLE Activité;
 DROP TABLE AdressePComplete;
@@ -14,7 +14,7 @@ DROP TABLE CommandeàLivrer CASCADE CONSTRAINTS;
 DROP TABLE CommandeenBoutique CASCADE CONSTRAINTS;
 DROP TABLE ProduitAPourCaractéristique CASCADE CONSTRAINTS;
 DROP TABLE ProduitAPourSaison CASCADE CONSTRAINTS;
-DROP TABLE ProducteurAPourActivité CASCADE CONSTRAINTS;
+DROP TABLE Producteurapouractivite CASCADE CONSTRAINTS;
 DROP TABLE PerteProduit CASCADE CONSTRAINTS;
 DROP TABLE PerteContenant CASCADE CONSTRAINTS;
 DROP TABLE LotProduit CASCADE CONSTRAINTS;
@@ -41,6 +41,14 @@ INSERT INTO AdressePComplete VALUES (46.10, 7.22); -- Martigny
 INSERT INTO AdressePComplete VALUES (46.25, 7.45); -- Fully
 INSERT INTO AdressePComplete VALUES (46.20, 7.40); -- Sierre
 INSERT INTO AdressePComplete VALUES (46.15, 7.30); -- Bagnes
+INSERT INTO AdressePComplete (Latitude, Longitude) VALUES (48.8566, 2.3522); -- Paris
+INSERT INTO AdressePComplete (Latitude, Longitude) VALUES (50.8503, 4.3517); -- Bruxelles
+INSERT INTO AdressePComplete (Latitude, Longitude) VALUES (52.5200, 13.4050); --Berlin
+INSERT INTO AdressePComplete (Latitude, Longitude) VALUES (41.9028, 12.4964); -- Rome
+INSERT INTO AdressePComplete (Latitude, Longitude) VALUES (40.4168, -3.7038); -- Madrid
+INSERT INTO AdressePComplete (Latitude, Longitude) VALUES (52.3676, 4.9041); -- Amsterdam
+INSERT INTO AdressePComplete (Latitude, Longitude) VALUES (46.9481, 7.4474); -- Suisse
+
 
 -- === 2. Producteurs ===
 INSERT INTO Producteur VALUES (1, 'ferme.valais@exemple.com', 'Roux', 'Jean', 46.22, 7.35);
@@ -48,6 +56,21 @@ INSERT INTO Producteur VALUES (2, 'fromagerie.martigny@exemple.com', 'Berthier',
 INSERT INTO Producteur VALUES (3, 'huile.fully@exemple.com', 'Favre', 'Claire', 46.25, 7.45);
 INSERT INTO Producteur VALUES (4, 'fromagerie.sierre@exemple.com', 'Dupont', 'Marc', 46.20, 7.40);
 INSERT INTO Producteur VALUES (5, 'ferme.bagnes@exemple.com', 'Gobet', 'Sophie', 46.15, 7.30);
+INSERT INTO Producteur (idProducteur, Email, NomProducteur, PrenomProducteur, Latitude, Longitude) 
+VALUES (6, 'ferme.paris@exemple.com', 'Martin', 'Paul', 48.8566, 2.3522); 
+INSERT INTO Producteur (idProducteur, Email, NomProducteur, PrenomProducteur, Latitude, Longitude) 
+VALUES (7, 'fromagerie.bruxelles@exemple.com', 'Lemoine', 'Anne', 50.8503, 4.3517);
+INSERT INTO Producteur (idProducteur, Email, NomProducteur, PrenomProducteur, Latitude, Longitude) 
+VALUES (8, 'huile.berlin@exemple.com', 'Schmidt', 'Karl', 52.5200, 13.4050);
+INSERT INTO Producteur (idProducteur, Email, NomProducteur, PrenomProducteur, Latitude, Longitude) 
+VALUES (9, 'fromagerie.rome@exemple.com', 'Bianchi', 'Luca', 41.9028, 12.4964);
+INSERT INTO Producteur (idProducteur, Email, NomProducteur, PrenomProducteur, Latitude, Longitude) 
+VALUES (10, 'ferme.madrid@exemple.com', 'Garcia', 'Maria', 40.4168, -3.7038);
+INSERT INTO Producteur (idProducteur, Email, NomProducteur, PrenomProducteur, Latitude, Longitude) 
+VALUES (11, 'ferme.amsterdam@exemple.com', 'Jansen', 'Henk', 52.3676, 4.9041);
+INSERT INTO Producteur (idProducteur, Email, NomProducteur, PrenomProducteur, Latitude, Longitude) 
+VALUES (12, 'fromagerie.berne@exemple.com', 'Meier', 'Sophie', 46.9481, 7.4474);
+
 
 -- === 3. Activités ===
 INSERT INTO Activité VALUES ('Agriculteur');
@@ -55,20 +78,39 @@ INSERT INTO Activité VALUES ('Eleveur');
 INSERT INTO Activité VALUES ('Fromager');
 
 -- === 4. Producteur-Activité ===
-INSERT INTO ProducteurAPourActivité VALUES (1, 'Agriculteur');
-INSERT INTO ProducteurAPourActivité VALUES (2, 'Fromager');
-INSERT INTO ProducteurAPourActivité VALUES (3, 'Agriculteur');
-INSERT INTO ProducteurAPourActivité VALUES (4, 'Fromager');
-INSERT INTO ProducteurAPourActivité VALUES (5, 'Agriculteur');
+INSERT INTO Producteurapouractivite VALUES (1, 'Agriculteur');
+INSERT INTO Producteurapouractivite VALUES (2, 'Fromager');
+INSERT INTO Producteurapouractivite VALUES (3, 'Agriculteur');
+INSERT INTO Producteurapouractivite VALUES (4, 'Fromager');
+INSERT INTO Producteurapouractivite VALUES (5, 'Agriculteur');
+-- Table Producteurapouractivite (idProducteur, TypeActivité)
+
+-- Nouveau producteurs : 
+-- 6 : Paris -> Agriculteur
+-- 7 : Bruxelles -> Fromager
+-- 8 : Berlin -> Agriculteur
+-- 9 : Rome -> Fromager
+-- 10 : Madrid -> Agriculteur
+-- 11 : Amsterdam -> Eleveur
+-- 12 : Berne -> Fromager
+
+INSERT INTO Producteurapouractivite (idProducteur, TypeActivité) VALUES (6, 'Agriculteur');
+INSERT INTO Producteurapouractivite (idProducteur, TypeActivité) VALUES (7, 'Fromager');
+INSERT INTO Producteurapouractivite (idProducteur, TypeActivité) VALUES (8, 'Agriculteur');
+INSERT INTO Producteurapouractivite (idProducteur, TypeActivité) VALUES (9, 'Fromager');
+INSERT INTO Producteurapouractivite (idProducteur, TypeActivité) VALUES (10, 'Agriculteur');
+INSERT INTO Producteurapouractivite (idProducteur, TypeActivité) VALUES (11, 'Eleveur');
+INSERT INTO Producteurapouractivite (idProducteur, TypeActivité) VALUES (12, 'Fromager');
+
 
 -- === 5. Produits ===
-INSERT INTO Produit VALUES (1, 'Pommes du Valais', 'fruits secs', 'Pommes séchées bio du Valais', 100, 1);
-INSERT INTO Produit VALUES (2, 'Raclette AOP', 'Fromage', 'Fromage à raclette AOP demi-meule', 50, 2);
-INSERT INTO Produit VALUES (3, 'Huile de noix', 'huile', 'Huile pressée à froid, locale', 30, 3);
-INSERT INTO Produit VALUES (4, 'Lentilles vertes', 'legumineuse', 'Lentilles vertes de la ferme Roux', 80, 1);
-INSERT INTO Produit VALUES (5, 'Miel de montagne', 'boisson', 'Miel pur de montagne bio', 60, 4);
-INSERT INTO Produit VALUES (6, 'Châtaignes', 'fruits secs', 'Châtaignes locales grillées', 40, 5);
-INSERT INTO Produit VALUES (7, 'Fromage de chèvre', 'Fromage', 'Fromage de chèvre artisanal', 25, 4);
+INSERT INTO Produit VALUES (1, 'Pommes du Valais', 'fruits secs', 'Pommes séchées bio du Valais', 1);
+INSERT INTO Produit VALUES (2, 'Raclette AOP', 'Fromage', 'Fromage à raclette AOP demi-meule', 2);
+INSERT INTO Produit VALUES (3, 'Huile de noix', 'huile', 'Huile pressée à froid, locale', 3);
+INSERT INTO Produit VALUES (4, 'Lentilles vertes', 'legumineuse', 'Lentilles vertes de la ferme Roux', 1);
+INSERT INTO Produit VALUES (5, 'Miel de montagne', 'boisson', 'Miel pur de montagne bio', 4);
+INSERT INTO Produit VALUES (6, 'Châtaignes', 'fruits secs', 'Châtaignes locales grillées', 5);
+INSERT INTO Produit VALUES (7, 'Fromage de chèvre', 'Fromage', 'Fromage de chèvre artisanal', 4);
 
 SELECT * FROM Produit;
 -- === 6. Saisons de disponibilité ===
@@ -177,3 +219,409 @@ INSERT INTO PerteProduit VALUES (2, 6, TO_DATE('2025-10-25','YYYY-MM-DD'), 1, 'c
 INSERT INTO PerteContenant VALUES (2, 4, TO_DATE('2025-10-26','YYYY-MM-DD'), 5, 'vol');
 
 COMMIT;
+
+INSERT INTO Produit (idProduit, NomProduit, CategorieProduit, DescriptionProduit, idProducteur)
+VALUES (8, 'Yaourt nature fermier', 'laitage',
+        'Yaourt artisanal au lait entier de ferme', 7);
+
+INSERT INTO Produit VALUES
+(10, 'Jus d’orange frais', 'boisson',
+ 'Jus pressé artisanal 100% orange', 6);
+
+INSERT INTO Produit VALUES
+(11, 'Riz basmati premium', 'cereales',
+ 'Riz basmati long grain parfumé', 12);
+
+INSERT INTO Produit VALUES
+(12, 'Haricots rouges', 'legumineuse',
+ 'Haricots rouges secs de qualité', 9);
+
+INSERT INTO Produit VALUES
+(13, 'Amandes grillées', 'fruits secs',
+ 'Amandes grillées sans sel', 8);
+
+INSERT INTO Produit VALUES
+(14, 'Huile d’olive vierge', 'huile',
+ 'Huile d’olive pressée à froid', 10);
+
+INSERT INTO Produit VALUES
+(15, 'Steak haché bio', 'viande',
+ 'Bœuf élevé en plein air', 11);
+
+INSERT INTO Produit VALUES
+(16, 'Lait demi-écrémé', 'laitage',
+ 'Lait frais demi-écrémé pasteurisé', 2);
+
+INSERT INTO Produit VALUES
+(17, 'Tomates cerises', 'legume',
+ 'Tomates cerises locales', 11);
+
+INSERT INTO Produit VALUES
+(18, 'Pommes Golden', 'fruit',
+ 'Pommes Golden croquantes', 5);
+
+INSERT INTO Produit VALUES
+(20, 'Spaghetti artisanal', 'pates',
+ 'Pâtes produites de manière traditionnelle', 3);
+
+select * from produit order by idproduit;
+
+-- Produit 1 : Pommes du Valais
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('01-NOV-25','DD-MON-RR'), 30, 'DLUO', TO_DATE('05-DEC-25','DD-MON-RR'), 4, 2, 1, 0),
+('preconditionne', 0.5, TO_DATE('10-NOV-25','DD-MON-RR'), 20, 'DLUO', TO_DATE('30-NOV-25','DD-MON-RR'), 5, 2.5, 1, 1);
+
+-- Produit 2 : Raclette AOP
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('15-SEP-25','DD-MON-RR'), 32.928, 'DLUO', TO_DATE('15-SEP-26','DD-MON-RR'), 7, 3, 2, 0);
+
+-- Produit 3 : Huile de noix
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('18-OCT-25','DD-MON-RR'), 41.16, 'DLUO', TO_DATE('01-FEB-26','DD-MON-RR'), 8, 5, 3, 0);
+
+-- Produit 4 : Lentilles vertes
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('25-OCT-25','DD-MON-RR'), 32.928, 'DLUO', TO_DATE('01-MAR-26','DD-MON-RR'), 7.5, 7, 4, 0);
+
+-- Produit 5 : Miel de montagne
+INSERT INTO LotProduit VALUES
+('preconditionne', 0.5, TO_DATE('20-OCT-25','DD-MON-RR'), 27.44, 'DLC', TO_DATE('15-JAN-26','DD-MON-RR'), 5, 6, 5, 0),
+('preconditionne', 0.5, TO_DATE('12-OCT-25','DD-MON-RR'), 68.6, 'DLC', TO_DATE('30-NOV-25','DD-MON-RR'), 15, 2, 5, 1);
+
+-- Produit 6 : Châtaignes
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('18-OCT-25','DD-MON-RR'), 40, 'DLUO', TO_DATE('01-FEB-26','DD-MON-RR'), 10, 5, 6, 0);
+
+-- Produit 7 : Fromage de chèvre
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('10-OCT-25','DD-MON-RR'), 30, 'DLUO', TO_DATE('30-NOV-25','DD-MON-RR'), 9, 6, 7, 1);
+
+-- Produit 8 : Yaourt nature fermier
+INSERT INTO LotProduit VALUES
+('preconditionne', 0.5, TO_DATE('20-NOV-25','DD-MON-RR'), 50, 'DLC', TO_DATE('27-NOV-25','DD-MON-RR'), 2.5, 1.8, 8, 1);
+
+-- Produit 9 : Msmn marocain
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('05-OCT-25','DD-MON-RR'), 25, 'DLUO', TO_DATE('05-DEC-25','DD-MON-RR'), 5, 3, 9, 0);
+
+-- Produit 10 : Jus d’orange frais
+INSERT INTO LotProduit VALUES
+('preconditionne', 0.5, TO_DATE('15-NOV-25','DD-MON-RR'), 40, 'DLC', TO_DATE('22-NOV-25','DD-MON-RR'), 3.5, 2.2, 10, 1);
+
+-- Produit 11 : Riz basmati premium
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('01-OCT-25','DD-MON-RR'), 50, 'DLUO', TO_DATE('01-SEP-26','DD-MON-RR'), 8, 5, 11, 0);
+
+-- Produit 12 : Haricots rouges
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('05-NOV-25','DD-MON-RR'), 30, 'DLUO', TO_DATE('05-DEC-25','DD-MON-RR'), 6, 3, 12, 1);
+
+-- Produit 13 : Amandes grillées
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('10-OCT-25','DD-MON-RR'), 25, 'DLUO', TO_DATE('10-DEC-25','DD-MON-RR'), 7, 4, 13, 0);
+
+-- Produit 14 : Huile d’olive vierge
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('15-OCT-25','DD-MON-RR'), 20, 'DLUO', TO_DATE('15-JAN-26','DD-MON-RR'), 10, 6, 14, 0);
+
+-- Produit 15 : Steak haché bio
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('20-OCT-25','DD-MON-RR'), 15, 'DLUO', TO_DATE('20-NOV-25','DD-MON-RR'), 12, 8, 15, 1);
+
+-- Produit 16 : Lait demi-écrémé
+INSERT INTO LotProduit VALUES
+('preconditionne', 0.5, TO_DATE('10-NOV-25','DD-MON-RR'), 50, 'DLC', TO_DATE('17-NOV-25','DD-MON-RR'), 1.5, 1, 16, 1);
+
+-- Produit 17 : Tomates cerises
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('01-NOV-25','DD-MON-RR'), 20, 'DLUO', TO_DATE('01-DEC-25','DD-MON-RR'), 4, 2.5, 17, 1);
+
+-- Produit 18 : Pommes Golden
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('15-OCT-25','DD-MON-RR'), 30, 'DLUO', TO_DATE('15-DEC-25','DD-MON-RR'), 5, 3, 18, 0);
+
+-- Produit 20 : Spaghetti artisanal
+INSERT INTO LotProduit VALUES
+('vrac', 1, TO_DATE('01-NOV-25','DD-MON-RR'), 40, 'DLUO', TO_DATE('01-DEC-25','DD-MON-RR'), 6, 3, 20, 0);
+
+-- Exemple produit 1 : Pommes du Valais, deux lots préconditionnés
+INSERT INTO LotProduit (
+    ModeConditionnement, PoidsUnitaire, DateReceptionP, QuantiteDisponibleP,
+    DatePeremptionType, DatePeremption, PrixVentePTTC, PrixAchatProducteur,
+    idProduit, REMISE_APPLIQUEE
+) VALUES (
+    'preconditionne', 0.75, TO_DATE('15-NOV-25','DD-MON-RR'), 15,
+    'DLUO', TO_DATE('22-NOV-25','DD-MON-RR'), 2.5, 2.2,
+    1, 1
+);
+
+INSERT INTO LotProduit (
+    ModeConditionnement, PoidsUnitaire, DateReceptionP, QuantiteDisponibleP,
+    DatePeremptionType, DatePeremption, PrixVentePTTC, PrixAchatProducteur,
+    idProduit, REMISE_APPLIQUEE
+) VALUES (
+    'preconditionne', 2.5, TO_DATE('20-NOV-25','DD-MON-RR'), 10,
+    'DLUO', TO_DATE('28-NOV-25','DD-MON-RR'), 3, 2.5,
+    1, 1
+);
+
+INSERT INTO LotProduit (
+    ModeConditionnement, PoidsUnitaire, DateReceptionP, QuantiteDisponibleP,
+    DatePeremptionType, DatePeremption, PrixVentePTTC, PrixAchatProducteur, idProduit, REMISE_APPLIQUEE
+) VALUES (
+    'preconditionne', 0.75, TO_DATE('10-NOV-25','DD-MON-RR'), 20,
+    'DLUO', TO_DATE('18-NOV-25','DD-MON-RR'), 8.5, 7, 2, 1
+);
+
+INSERT INTO LotProduit (
+    ModeConditionnement, PoidsUnitaire, DateReceptionP, QuantiteDisponibleP,
+    DatePeremptionType, DatePeremption, PrixVentePTTC, PrixAchatProducteur, idProduit, REMISE_APPLIQUEE
+) VALUES (
+    'vrac', 1, TO_DATE('12-NOV-25','DD-MON-RR'), 30,
+    'DLUO', TO_DATE('22-NOV-25','DD-MON-RR'), 7.5, 6.5, 2, 1
+);
+
+
+-- Produit 15 : Steak haché bio (idProduit = 15)
+INSERT INTO LotProduit (
+    ModeConditionnement, PoidsUnitaire, DateReceptionP, QuantiteDisponibleP,
+    DatePeremptionType, DatePeremption, PrixVentePTTC, PrixAchatProducteur, idProduit, REMISE_APPLIQUEE
+) VALUES (
+    'preconditionne', 2.5, TO_DATE('20-NOV-25','DD-MON-RR'), 25,
+    'DLC', TO_DATE('15-DEC-25','DD-MON-RR'), 12.5, 10, 15, 1
+);
+
+INSERT INTO LotProduit (
+    ModeConditionnement, PoidsUnitaire, DateReceptionP, QuantiteDisponibleP,
+    DatePeremptionType, DatePeremption, PrixVentePTTC, PrixAchatProducteur, idProduit, REMISE_APPLIQUEE
+) VALUES (
+    'preconditionne', 3, TO_DATE('22-NOV-25','DD-MON-RR'), 30,
+    'DLC', TO_DATE('18-DEC-25','DD-MON-RR'), 15, 12, 15, 1
+);
+
+-- Produit 17 : Tomates cerises (idProduit = 17)
+INSERT INTO LotProduit (
+    ModeConditionnement, PoidsUnitaire, DateReceptionP, QuantiteDisponibleP,
+    DatePeremptionType, DatePeremption, PrixVentePTTC, PrixAchatProducteur, idProduit, REMISE_APPLIQUEE
+) VALUES (
+    'preconditionne', 2.5, TO_DATE('21-NOV-25','DD-MON-RR'), 18,
+    'DLUO', TO_DATE('29-NOV-25','DD-MON-RR'), 6.5, 5, 17, 1
+);
+
+INSERT INTO LotProduit (
+    ModeConditionnement, PoidsUnitaire, DateReceptionP, QuantiteDisponibleP,
+    DatePeremptionType, DatePeremption, PrixVentePTTC, PrixAchatProducteur, idProduit, REMISE_APPLIQUEE
+) VALUES (
+    'preconditionne', 3, TO_DATE('23-NOV-25','DD-MON-RR'), 20,
+    'DLUO', TO_DATE('01-DEC-25','DD-MON-RR'), 7.5, 5.5, 17, 1
+);
+
+
+
+-- Ligne 1
+UPDATE LotProduit
+SET QuantiteDisponibleP = 20
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('10-OCT-25','DD-MON-RR')
+  AND idProduit = 9;
+
+-- Ligne 2
+UPDATE LotProduit
+SET QuantiteDisponibleP = 15
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('10-OCT-25','DD-MON-RR')
+  AND idProduit = 1;
+
+-- Ligne 3
+UPDATE LotProduit
+SET QuantiteDisponibleP = 30
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('15-SEP-25','DD-MON-RR')
+  AND idProduit = 3;
+
+-- Ligne 4
+UPDATE LotProduit
+SET QuantiteDisponibleP = 25
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('18-OCT-25','DD-MON-RR')
+  AND idProduit = 5;
+
+-- Ligne 5
+UPDATE LotProduit
+SET QuantiteDisponibleP = 28
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('25-OCT-25','DD-MON-RR')
+  AND idProduit = 7;
+
+-- Ligne 6
+UPDATE LotProduit
+SET QuantiteDisponibleP = 12
+WHERE ModeConditionnement = 'preconditionne' 
+  AND PoidsUnitaire = 0.5
+  AND DateReceptionP = TO_DATE('20-OCT-25','DD-MON-RR')
+  AND idProduit = 6;
+
+-- Ligne 7
+UPDATE LotProduit
+SET QuantiteDisponibleP = 18
+WHERE ModeConditionnement = 'preconditionne' 
+  AND PoidsUnitaire = 0.5
+  AND DateReceptionP = TO_DATE('12-OCT-25','DD-MON-RR')
+  AND idProduit = 2;
+
+-- Ligne 1
+UPDATE LotProduit
+SET QuantiteDisponibleP = 20
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('10-OCT-25','DD-MON-RR')
+  AND idProduit = 9;
+
+-- Ligne 2
+UPDATE LotProduit
+SET QuantiteDisponibleP = 15
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('10-OCT-25','DD-MON-RR')
+  AND idProduit = 1;
+
+-- Ligne 3
+UPDATE LotProduit
+SET QuantiteDisponibleP = 30
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('15-SEP-25','DD-MON-RR')
+  AND idProduit = 3;
+
+-- Ligne 4
+UPDATE LotProduit
+SET QuantiteDisponibleP = 25
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('18-OCT-25','DD-MON-RR')
+  AND idProduit = 5;
+
+-- Ligne 5
+UPDATE LotProduit
+SET QuantiteDisponibleP = 28
+WHERE ModeConditionnement = 'vrac' 
+  AND PoidsUnitaire = 1
+  AND DateReceptionP = TO_DATE('25-OCT-25','DD-MON-RR')
+  AND idProduit = 7;
+
+-- Ligne 6
+UPDATE LotProduit
+SET QuantiteDisponibleP = 12
+WHERE ModeConditionnement = 'preconditionne' 
+  AND PoidsUnitaire = 0.5
+  AND DateReceptionP = TO_DATE('20-OCT-25','DD-MON-RR')
+  AND idProduit = 6;
+
+-- Ligne 7
+UPDATE LotProduit
+SET QuantiteDisponibleP = 18
+WHERE ModeConditionnement = 'preconditionne' 
+  AND PoidsUnitaire = 0.5
+  AND DateReceptionP = TO_DATE('12-OCT-25','DD-MON-RR')
+  AND idProduit = 2;
+
+  UPDATE LotContenant
+SET QUANTITEDISPONIBLEC = 70
+WHERE QUANTITEDISPONIBLEC IS NULL;
+
+INSERT INTO ProduitCommande (idProduit, DelaiDisponibiliteHeure)
+SELECT idProduit, 48
+FROM Produit
+WHERE idProduit IN (1, 2, 3, 4, 5)
+AND idProduit NOT IN (SELECT idProduit FROM ProduitCommande);
+
+INSERT INTO ProduitStock (idProduit)
+SELECT idProduit
+FROM Produit
+WHERE idProduit NOT IN (SELECT idProduit FROM ProduitCommande)
+AND idProduit NOT IN (SELECT idProduit FROM ProduitStock);
+
+INSERT INTO SaisonDisponibilite (DateDebut, DateFin)
+VALUES (TO_DATE('01-JAN-25','DD-MON-RR'), TO_DATE('31-MAR-25','DD-MON-RR'));
+
+INSERT INTO SaisonDisponibilite (DateDebut, DateFin)
+VALUES (TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+
+INSERT INTO SaisonDisponibilite (DateDebut, DateFin)
+VALUES (TO_DATE('01-JUL-25','DD-MON-RR'), TO_DATE('30-SEP-25','DD-MON-RR'));
+
+INSERT INTO SaisonDisponibilite (DateDebut, DateFin)
+VALUES (TO_DATE('01-OCT-25','DD-MON-RR'), TO_DATE('31-DEC-25','DD-MON-RR'));
+
+
+-- Produit 6 : 1 saison
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (6, TO_DATE('01-JAN-25','DD-MON-RR'), TO_DATE('31-MAR-25','DD-MON-RR'));
+
+-- Produit 7 : 2 saisons
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (7, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (7, TO_DATE('01-JUL-25','DD-MON-RR'), TO_DATE('30-SEP-25','DD-MON-RR'));
+
+-- Produit 8 : 1 saison
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (8, TO_DATE('01-OCT-25','DD-MON-RR'), TO_DATE('31-DEC-25','DD-MON-RR'));
+
+-- Produit 9 : 2 saisons
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (9, TO_DATE('01-JAN-25','DD-MON-RR'), TO_DATE('31-MAR-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (9, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+
+-- Produit 10 : 1 saison
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (10, TO_DATE('01-OCT-25','DD-MON-RR'), TO_DATE('31-DEC-25','DD-MON-RR'));
+
+-- Produit 11 : 3 saisons
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (11, TO_DATE('01-JAN-25','DD-MON-RR'), TO_DATE('31-MAR-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (11, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (11, TO_DATE('01-JUL-25','DD-MON-RR'), TO_DATE('30-SEP-25','DD-MON-RR'));
+
+-- Produit 12 : 2 saisons
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (12, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (12, TO_DATE('01-OCT-25','DD-MON-RR'), TO_DATE('31-DEC-25','DD-MON-RR'));
+
+-- Produit 13 : 1 saison
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (13, TO_DATE('01-JUL-25','DD-MON-RR'), TO_DATE('30-SEP-25','DD-MON-RR'));
+
+-- Produit 14 : 2 saisons
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (14, TO_DATE('01-JAN-25','DD-MON-RR'), TO_DATE('31-MAR-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (14, TO_DATE('01-OCT-25','DD-MON-RR'), TO_DATE('31-DEC-25','DD-MON-RR'));
+
+-- Produit 15 : 1 saison
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (15, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+
+-- Produit 16 : 1 saison
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (16, TO_DATE('01-JUL-25','DD-MON-RR'), TO_DATE('30-SEP-25','DD-MON-RR'));
+
+-- Produit 17 : 2 saisons
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (17, TO_DATE('01-JAN-25','DD-MON-RR'), TO_DATE('31-MAR-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (17, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+
+-- Produit 18 : 1 saison
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (18, TO_DATE('01-OCT-25','DD-MON-RR'), TO_DATE('31-DEC-25','DD-MON-RR'));
+
+-- Produit 19 : 3 saisons
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (19, TO_DATE('01-JAN-25','DD-MON-RR'), TO_DATE('31-MAR-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (19, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (19, TO_DATE('01-JUL-25','DD-MON-RR'), TO_DATE('30-SEP-25','DD-MON-RR'));
+
+-- Produit 20 : 2 saisons
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (20, TO_DATE('01-APR-25','DD-MON-RR'), TO_DATE('30-JUN-25','DD-MON-RR'));
+INSERT INTO ProduitAPourSaison (idProduit, DateDebut, DateFin) VALUES (20, TO_DATE('01-OCT-25','DD-MON-RR'), TO_DATE('31-DEC-25','DD-MON-RR'));
+
+INSERT INTO DateRecuperation (DateRecuperation)
+VALUES (TO_DATE('30-NOV-25', 'DD-MON-RR'));
+
+INSERT INTO CommandeApourRecup (idCommande, DateRecuperation)
+VALUES (4, TO_DATE('30-NOV-25', 'DD-MON-RR'));
+
+INSERT INTO CommandeApourRecup (idCommande, DateRecuperation)
+VALUES (5, TO_DATE('30-NOV-25', 'DD-MON-RR'));
+
+INSERT INTO CommandeApourRecup (idCommande, DateRecuperation)
+VALUES (3, TO_DATE('30-NOV-25', 'DD-MON-RR'));

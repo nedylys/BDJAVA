@@ -5,8 +5,8 @@ public class CommandeProduit extends Commande {
     String ModeConditionnement;
     double PoidsUnitaire;
 
-    public CommandeProduit(int[] argsCommande,double qte,String ModeConditionnement,double PoidsUnitaire){
-        super(argsCommande,qte);
+    public CommandeProduit(int[] argsCommande,double qte,double prix,String ModeConditionnement,double PoidsUnitaire){
+        super(argsCommande,qte,prix);
         this.ModeConditionnement = ModeConditionnement;
         this.PoidsUnitaire = PoidsUnitaire;
     }

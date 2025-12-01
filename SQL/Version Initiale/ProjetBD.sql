@@ -48,7 +48,8 @@ CREATE TABLE Produit(
     idProduit INT PRIMARY KEY,
     NomProduit VARCHAR2(30),
     CategorieProduit VARCHAR2(30)
-         CHECK (CategorieProduit IN ('Fromage', 'boisson', 'cereales', 'legumineuse', 'fruits secs', 'huile')),
+         CHECK (CategorieProduit IN ('Fromage', 'boisson', 'cereales', 'legumineuse', 'fruits secs', 'huile', 'pates', 'viande', 'laitage',
+        'legume', 'fruit', 'epice')),
     DescriptionProduit VARCHAR2(255),
     StockProduit FLOAT CHECK (StockProduit >= 0),
     idProducteur INT,
@@ -98,7 +99,7 @@ CREATE TABLE ClientAnonyme(
 );
 
 CREATE TABLE Client(
-    emailClient VARCHAR2(30) PRIMARY KEY,
+    emailClient VARCHAR2(255) PRIMARY KEY,
     NomClient VARCHAR2(30),
     PrenomClient VARCHAR2(30),
     TelephoneClient VARCHAR2(15),
@@ -153,7 +154,7 @@ CREATE TABLE LotContenant(
     PrixVenteCTTC INT CHECK (PrixVenteCTTC >= 0),
     PRIMARY KEY (DateReceptionC, idContenant),
     CONSTRAINT fk_lot_contenant
-        FOREIGN KEY (idContenant) 
+        FOREIGN KEY (idContenant)
         REFERENCES Contenant(idContenant)
         ON DELETE CASCADE
 );
@@ -270,7 +271,7 @@ SET StatutCommandeB = 'Prete'
 WHERE StatutCommandeB = 'Prête'; */
 
 
-CREATE TABLE PerteProduit(
+/* CREATE TABLE PerteProduit(
     idPerteP INT,
     idProduit INT,
     DatePerteP DATE,
@@ -295,12 +296,42 @@ CREATE TABLE PerteContenant(
         REFERENCES Contenant(idContenant)
         ON DELETE CASCADE
 );
-
+ */
 CREATE TABLE ProduitStock(
     idProduit INT PRIMARY KEY,
     CONSTRAINT fk_produit_stock
         FOREIGN KEY (idProduit) 
         REFERENCES Produit(idProduit)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE PerteProduit(
+    idPerteP INT,
+    idProduit INT,
+    ModeConditionnement VARCHAR2(30),
+    PoidsUnitaire FLOAT,
+    DateReceptionP DATE,
+    DatePerteP DATE,
+    QuantitePerdueP INT CHECK (QuantitePerdueP > 0),
+    NaturePerteP VARCHAR2(255) CHECK (NaturePerteP IN ('vol','casse')),
+    PRIMARY KEY (idPerteP),
+    CONSTRAINT fk_lperte_produit_lot
+        FOREIGN KEY (DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire) 
+        REFERENCES LotProduit(DateReceptionP, idProduit, ModeConditionnement, PoidsUnitaire)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE PerteContenant(
+    idPerteC INT,
+    idContenant INT,
+    DateReceptionC DATE,
+    DatePerteC DATE,
+    QuantitePerdueC INT CHECK (QuantitePerdueC > 0),
+    NaturePerteP VARCHAR2(255) CHECK (NaturePerteP IN ('vol','casse')),
+    PRIMARY KEY (idPerteC),
+    CONSTRAINT fk_perte_contenant_lot
+        FOREIGN KEY (DateReceptionC, idContenant) 
+        REFERENCES LotContenant(DateReceptionC, idContenant)
         ON DELETE CASCADE
 );
 
@@ -312,6 +343,26 @@ CREATE TABLE ProduitCommande(
         REFERENCES Produit(idProduit)
         ON DELETE CASCADE
 );
+
+CREATE TABLE DateRecuperation (
+    DateRecuperation DATE,
+    PRIMARY KEY (DateRecuperation)
+);
+
+CREATE TABLE CommandeApourRecup (
+    idCommande INT,
+    DateRecuperation DATE,
+    PRIMARY KEY (idCommande, DateRecuperation),
+    CONSTRAINT fk_idCommande
+        FOREIGN KEY (idCommande)
+        REFERENCES Commande(idCommande)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_DateRecuperation
+        FOREIGN KEY (DateRecuperation)
+        REFERENCES DateRecuperation(DateRecuperation)
+        ON DELETE CASCADE
+);
+
 
 
 /* CREATE OR REPLACE TRIGGER Verif_Suppression_Client
@@ -490,6 +541,7 @@ DROP trigger verif_stock_contenant;
 DROP trigger verif_stock_produit;
 DROP trigger verif_suppression_client;
 
+-- Pour determiner la table faisant figurer une contrainte check dont on a le nom
 SELECT 
     uc.constraint_name,
     uc.table_name,
@@ -498,3 +550,13 @@ FROM user_constraints uc
 JOIN user_cons_columns ucc
     ON uc.constraint_name = ucc.constraint_name
 WHERE uc.constraint_name = 'SYS_C001323422'; */
+
+-- Pour déterminer le nom d'une contrainte check
+/* SELECT constraint_name
+FROM user_constraints
+WHERE table_name = 'PRODUIT'
+  AND constraint_type = 'C'; -- 'C' is for check
+ */
+/*  ALTER TABLE clientapouradresselivraison
+MODIFY emailclient VARCHAR2(255);
+commit; */

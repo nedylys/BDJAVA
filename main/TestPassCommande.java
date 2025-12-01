@@ -3,7 +3,7 @@ package main;
 import java.sql.*;
 import java.util.*;
 
-public class PassCommande{
+public class TestPassCommande{
     
     private Connection conn;
     private StatementCommande statementcomm;
@@ -21,7 +21,7 @@ public class PassCommande{
     private ArrayList<Savepoint> listSavePoint;
     private Savepoint sp;
 
-    public PassCommande(Connection conn,Scanner scan,MenuPrincipal menu){
+    public TestPassCommande(Connection conn,Scanner scan,MenuPrincipal menu){
         System.out.println("---------------- ⚠️  ATTENTION ⚠️  ----------------");
         System.out.println("Vous n'avez pas le droit de commander deux fois le même produit dans la même commande globale");
         System.out.println("Si vous voulez changer la quantité, allez dans l'onglet Changer la Quantité d'une Commande");
@@ -83,7 +83,7 @@ public class PassCommande{
         }
     }
     public void commandeProduit(){
-        menu.afficherProduits(scan);
+        this.afficherResumePanier();
         System.out.println("Entrer l'idProduit : ");
         int idProduit = scan.nextInt();
         scan.nextLine();
@@ -106,7 +106,6 @@ public class PassCommande{
         idProduitUtilise.add(idProduit);
         boolean dispoSaison = statementcomm.verifieDispoSaison(idProduit);
         if (!dispoSaison){
-                this.afficherResumePanier();
                 System.out.println(" 1 : Commander un Produit ");
                 System.out.println(" 2 : Commander un Contenant");
                 System.out.println(" 3 : Annuler la commande ");
@@ -153,7 +152,6 @@ public class PassCommande{
         }else{
             boolean dispo = statementcomm.getDispo(idProduit, qte, ModeConditionnement, PoidsUnitaire);
             if (!dispo){
-                this.afficherResumePanier();
                 System.out.println(" 1 : Commander un Produit ");
                 System.out.println(" 2 : Commander un Contenant");
                 System.out.println(" 3 : Annuler la commande ");
@@ -165,31 +163,27 @@ public class PassCommande{
                 beginCommande();
             }
         }
-        System.out.println("Voulez-vous commander le produit ?");
-        System.out.println(" 1 : Confirmer ");
-        System.out.println(" 0 : Annuler ");
-
-        int creecommande = scan.nextInt(); 
+        System.out.println("Voulez vous commander le produit ?");
+        System.out.println("Taper true or false : ");
+        boolean creecommande = scan.nextBoolean(); 
         scan.nextLine();
         listP.add(idProduit);
         //statementcomm.lockP(idProduit);
-        if (creecommande ==1 && !(commande)){
+        if (creecommande && !(commande)){
             int numligneP = -1;
             int[] argsCommande = {numligneP,idCommande,idProduit};
             double prix = statementcomm.retournePrixCommandeP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
-            System.out.println("Cette commande de ce produit vous coutera " + prix + " €"); 
+            System.out.println("Cette commande de ce produit vous coutera " + prix); 
             CommandeProduit commandeP = new CommandeProduit(argsCommande, qte,prix,ModeConditionnement,PoidsUnitaire);
             panierCommandeP.add(commandeP);
-        } else if (creecommande ==1 && commande){
+        } else if (creecommande && commande){
             int numligneP = -1;
             int[] argsCommande = {numligneP,idCommande,idProduit};
             double prix = statementcomm.retourneprixGlobalCommandeP(argsCommande, ModeConditionnement, qte,PoidsUnitaire);
-            System.out.println("Cette commande de ce produit vous coutera " + prix+ " €"); 
+            System.out.println("Cette commande de ce produit vous coutera " + prix); 
             CommandeProduit commandeP = new CommandeProduit(argsCommande, qte,prix,ModeConditionnement,PoidsUnitaire);
             panierCommandePCommande.add(commandeP);
         }
-        this.afficherResumePanier();
-
         //try{
             //Savepoint sp = conn.setSavepoint();
             //listSavePoint.add(sp);
@@ -208,9 +202,7 @@ public class PassCommande{
         beginCommande();
     }
     public void commandeContenant(){
-
         this.afficherResumePanier();
-        afficherListeContenants();
         System.out.println("Entrer l'idContenant : ");
         int idContenant = scan.nextInt();
         scan.nextLine();
@@ -241,13 +233,12 @@ public class PassCommande{
             commandeContenant();
         }
         System.out.println("Voulez vous commander le contenant ?");
-        System.out.println(" 1 : Confirmer ");
-        System.out.println(" 0 : Annuler ");
-        int creecommande = scan.nextInt(); 
+        System.out.println("Taper true or false : ");
+        boolean creecommande = scan.nextBoolean(); 
         scan.nextLine();
         listC.add(idContenant);
     
-        if (creecommande ==1 ){
+        if (creecommande){
             int numligneC = -1;
             int[] argsCommandeC = {numligneC,idCommande,idContenant};
             double prix = statementcomm.retournePrixCommandeC(argsCommandeC, qte);
@@ -255,8 +246,6 @@ public class PassCommande{
             Commande commandeC = new Commande(argsCommandeC, (double) qte,prix);
             panierCommandeC.add(commandeC);
         }
-        this.afficherResumePanier();
-
         System.out.println(" 1 : Commander un Produit ");
         System.out.println(" 2 : Recommander un Contenant");
         System.out.println(" 3 : Annuler la commande ");
@@ -303,42 +292,34 @@ public class PassCommande{
                 System.err.println("failed");
                 e.printStackTrace(System.err);
             }
-        System.out.println(" Voulez-vous payer en ligne : ");
-        System.out.println(" 1 : Confirmer ");
-        System.out.println(" 0 : Annuler ");
-        int paiementligne = scan.nextInt();
+        System.out.println("Paiement en ligne ou non : ");
+        System.out.println("Taper true or false : ");
+        boolean paiementligne = scan.nextBoolean();
         scan.nextLine();
         String ModePaiement;
-        if (paiementligne == 1){
+        if (paiementligne){
             ModePaiement = "En ligne";
-            System.out.println("✅ Paiement en ligne sélectionné.");
-
         }else{
             ModePaiement = "En boutique";
-            System.out.println("✅ Paiement en boutique sélectionné.");
-
         }
-        System.out.println("Voulez-vous que votre commande soit livrée à domicile ?");
-        System.out.println(" 1 : Confirmer ");
-        System.out.println(" 0 : Annuler ");
-        int livraison = scan.nextInt();
+        System.out.println("Commande à livrer ou non ? ");
+        System.out.println("Taper true or false : ");
+        boolean livraison = scan.nextBoolean();
         scan.nextLine();
         String ModeRecuperation; 
         String adresse;
-        if (livraison == 1){
+        if (livraison){
             ModeRecuperation = "Livraison";
-            System.out.println("Livraison à domicile confirmée.");
-            int adresselivraison;
+            boolean adresselivraison;
             if (!nvclient){
-                System.out.println("Voulez-vous utiliser une nouvelle adresse de livraison ? ");
-                System.out.println(" 1 : Confirmer ");
-                System.out.println(" 0 : Annuler ");
-                adresselivraison = scan.nextInt();
+                System.out.println("Utiliser une nouvelle adresse de livraison ou non ");
+                System.out.println("Taper true or false : ");
+                adresselivraison = scan.nextBoolean();
                 scan.nextLine();
             } else {
-                adresselivraison = 1;
+                adresselivraison = true;
             }
-            if (adresselivraison == 1){
+            if (adresselivraison){
                System.out.println("Entrer l'adresse de livraison : ");
                adresse = scan.nextLine();
                statementcomm.ajouteNovAdresseClient(adresse, emailClient);
@@ -522,7 +503,7 @@ public class PassCommande{
     }
     public void viderPanier(){
         this.afficherResumePanier();
-        System.out.println("Voulez-vous modifier le panier Produit ?");
+        System.out.println("Voulez vous modifier le panier Produit");
         System.out.println("Tapez 0(non) ou 1(oui) ");
         int choixPanierP = scan.nextInt();
         scan.nextLine();
@@ -789,8 +770,6 @@ public class PassCommande{
            menu.afficherMenu();
         }        
     }
-
-    
     private void afficherResumePanier() {
         System.out.println("--- PANIER ACTUEL ---");
         System.out.println(panierCommandeP.size()+panierCommandePCommande.size() + " Produits | " + panierCommandeC.size() + " Contenants");
@@ -803,49 +782,4 @@ public class PassCommande{
         System.out.println(e);
       }  
     }
-    // Dans la classe PassCommande.java
-
-    private void afficherListeContenants() {
-        System.out.println("\n📦 --- CATALOGUE DES CONTENANTS --- 📦");
-        
-        try (PreparedStatement ps = conn.prepareStatement(Statement.AFFICHER_CONTENANTS);
-            ResultSet rs = ps.executeQuery()) {
-
-            // En-tête adapté à VOS colonnes réelles
-            System.out.printf("%-5s | %-20s | %-10s | %-10s | %-12s%n", 
-                "ID", "Type", "Capacité", "Stock", "Réutilisable");
-            System.out.println("---------------------------------------------------------------------");
-
-            boolean hasResults = false;
-            while (rs.next()) {
-                hasResults = true;
-                
-                // 1. Récupération des VRAIES colonnes de votre table
-                int id = rs.getInt("idContenant");
-                String type = rs.getString("TypeContenant");
-                if (type == null) type = "Autre";
-                
-                int capacite = rs.getInt("CapaciteContenant");
-                float stock = rs.getFloat("StockDisponible");
-                
-                // Conversion du 0/1 en Oui/Non pour l'affichage
-                int isReutilisable = rs.getInt("ReutilisableContenant");
-                String reutilisableStr = (isReutilisable == 1) ? "Oui ♻️" : "Non";
-
-                // 2. Affichage formaté
-                System.out.printf("%-5d | %-20s | %-10d | %-10.1f | %-12s%n", 
-                    id, type, capacite, stock, reutilisableStr);
-            }
-
-            if (!hasResults) {
-                System.out.println("Aucun contenant disponible pour le moment.");
-            }
-            System.out.println("---------------------------------------------------------------------\n");
-
-        } catch (SQLException e) {
-            System.err.println("Erreur lors de l'affichage des contenants : " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    
 }
