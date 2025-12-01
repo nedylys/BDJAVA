@@ -268,6 +268,19 @@ public class PassCommande{
         beginCommande();
     }
     public void finalCommande(){
+        if (panierCommandeP.size() + panierCommandePCommande.size() + panierCommandeC.size() == 0){
+            System.out.println("Vous n’avez rien commandé… donc difficile de finaliser quoi que ce soit !");
+            System.out.println("On ne peut pas emballer du vide… même si on a essayé, ça marche pas 😄");
+            System.out.println("   ");
+            System.out.println(" 1 : Commander un Produit ");
+            System.out.println(" 2 : Recommander un Contenant");
+            System.out.println(" 3 : Annuler la commande ");
+            System.out.println(" 5 : Supprimer des produits du panier");
+            System.out.println(" 6 : Changer la Quantité d'une Commande");
+            System.out.println(" 7 : Retour au menu prinicipal");
+            System.out.println("Taper le numéro choisi:");
+            beginCommande();
+        }
         this.afficherResumePanier();
         System.out.println("  ");
         System.out.println("⚠️ Attention : si vous avez déjà ajouté un client ou une adresse,");
@@ -312,11 +325,9 @@ public class PassCommande{
         if (paiementligne == 1){
             ModePaiement = "En ligne";
             System.out.println("✅ Paiement en ligne sélectionné.");
-
         }else{
             ModePaiement = "En boutique";
             System.out.println("✅ Paiement en boutique sélectionné.");
-
         }
         System.out.println("Voulez-vous que votre commande soit livrée à domicile ?");
         System.out.println(" 1 : Confirmer ");
@@ -553,6 +564,7 @@ public class PassCommande{
             scan.nextLine();
             System.out.println("Taper successivement le numéro des lignes que vous voulez enlever du panier");
             for (int j = 0; j<nP;j++){
+                System.out.println("Entrer le numéro de la ligne : ");
                 int iAjeter = scan.nextInt();
                 scan.nextLine();
                 revenirArriere(iAjeter);
@@ -583,6 +595,7 @@ public class PassCommande{
             revenirArriere(nC);
             System.out.println("Taper successivement le numéro des lignes que vous voulez enlever du panier");
             for (int j = 0; j<nC;j++){
+                System.out.println("Entrer le numéro de la ligne : ");
                 int iAjeterC = scan.nextInt();
                 scan.nextLine();
                 revenirArriere(nC);
@@ -601,8 +614,9 @@ public class PassCommande{
         beginCommande();
     }
     public void changeQtePC(){
+        // Changer la quantité d'une commande d'un produit ou contenant
        this.afficherResumePanier();
-       System.out.println("Voulez vous changer la quatité d'un produit ?");
+       System.out.println("Voulez vous changer la quatité d'un ou plusieurs produits  ?");
        System.out.println("Tapez 0(non) ou 1(oui) ");
         int choixP = scan.nextInt();
         scan.nextLine();
@@ -629,7 +643,7 @@ public class PassCommande{
                     poidsUnitaire
                 );
             }
-            System.out.println("Combien de commandes Produit voulez vous changer ?");
+            System.out.println("Combien de lignes de commandes Produit voulez vous changer ?");
             int nP = scan.nextInt();
             scan.nextLine();
             revenirArriere(nP);
@@ -698,7 +712,7 @@ public class PassCommande{
                 }
             }
         }
-        System.out.println("Voulez vous changer la quatité d'un contenant ?");
+        System.out.println("Voulez vous changer la quatité d'un ou plusieurs contenants ?");
         System.out.println("Tapez 0(non) ou 1(oui) ");
         int choixC = scan.nextInt();
         scan.nextLine();
@@ -710,7 +724,7 @@ public class PassCommande{
                 int[] argsPanierC = c.getArgsCommande();
                 System.out.println(ic+". "+ "idContenant = " + argsPanierC[2] );
             }
-            System.out.println("Combien de commandes Contenant voulez vous changer ?");
+            System.out.println("Combien de Lignes commandes Contenant voulez vous changer ?");
             int nC = scan.nextInt();
             scan.nextLine();
             revenirArriere(nC);
@@ -803,8 +817,7 @@ public class PassCommande{
         System.out.println(e);
       }  
     }
-    // Dans la classe PassCommande.java
-
+   
     private void afficherListeContenants() {
         System.out.println("\n📦 --- CATALOGUE DES CONTENANTS --- 📦");
         

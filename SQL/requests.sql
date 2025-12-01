@@ -1,42 +1,123 @@
 -- Fichier SQL regroupant toutes les requêtes identifiées dans les fichiers java
 
 -- StatementCommande.java
-select DelaiDisponibiliteHeure from ProduitCommande where idProduit = ?;
-select idProduit from ProduitCommande where idProduit = ?;
-select idProduit from ProduitCommande where idProduit = ?;
-select DateDebut,DateFin from ProduitAPourSaison where idProduit = ?;
+
+-- Passage d'une Commande Produit :
+
+-- Vérifie si l'idProduit existe dans la base.
 select idProduit from Produit where idProduit = ?;
-select idContenant from Contenant where idContenant = ?;
+
+-- Vérifie si le produit est disponible en fonction de sa saison.
+select DateDebut,DateFin from ProduitAPourSaison where idProduit = ?;
+
+-- Affiche les différents modes de conditionnement d’un produit.
+SELECT DISTINCT ModeConditionnement from LotProduit where idProduit = ?;
+
+-- Si le produit est préconditionné, affiche les différents poids unitaires disponibles.
 select DISTINCT PoidsUnitaire from LotProduit where idProduit = ? and ModeConditionnement = 'preconditionne';
-select sum(PoidsUnitaire*QuantiteDisponibleP) from LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? and DatePeremption >= TO_DATE(?, 'YYYY-MM-DD');
+
+-- Vérifie si le produit est sur commande ou en stock.
+select idProduit from ProduitCommande where idProduit = ?;
+
+-- Si le produit est en stock, récupère son délai de disponibilité.
+select DelaiDisponibiliteHeure from ProduitCommande where idProduit = ?;
+
+-- Vérifie que la quantité demandée est disponible.
+select sum(PoidsUnitaire*QuantiteDisponibleP) from LotProduit 
+where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? and DatePeremption >= TO_DATE(?, 'YYYY-MM-DD');
+
+-- Calcule le prix du produit lorsqu’il est en stock.
+SELECT PrixVentePTTC FROM LotProduit 
+where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? 
+and QuantiteDisponibleP != 0 and DatePeremption >= TO_DATE(?, 'YYYY-MM-DD')
+ORDER BY DatePeremption ASC;
+
+-- Si le produit est sur commande, la date de péremption n'est plus prise en compte (voir documentation).
+SELECT PrixVentePTTC FROM LotProduit 
+where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?;
+
+
+
+-- Passage d'une Commande Contenant :
+
+-- Vérifie si l'idContenant existe dans la base.
+select idContenant from Contenant where idContenant = ?;
+
+-- Vérifie que la quantité demandée pour le contenant est disponible.
 select sum(QuantiteDisponibleC) from LotContenant where idContenant = ?;
-select PrixVentePTTC from LotProduit where idProduit = ? and ModeConditionnement = ?;
-select PrixVenteCTTC from LotContenant where idContenant = ?;
+
+-- Calcule le prix du contenant.
+select PrixVenteCTTC from LotContenant where idContenant = ? and QuantiteDisponibleC != 0;
+
+
+
+-- Finalisation de la commande :
+
+-- Vérifie si le client existe déjà via son email.
+select * from Client where emailClient = ?;
+
+-- Récupère l'idClient d’un ancien client.
 select idClient from Client where emailClient = ?;
+
+-- Si le client est nouveau, on l’ajoute dans la base.
 INSERT INTO Client VALUES(?,?,?,?,?);
 INSERT INTO ClientAnonyme VALUES(?);
+
+-- Commit de la création du nouveau client.
+COMMIT;
+
+-- Vérifie si l’adresse de livraison existe déjà.
+select * from AdresseLivraison where AdresseLivraison = ?;
+
+-- Si l'adresse est nouvelle, on l’insère et on l’associe au client.
 INSERT INTO ClientAPourAdresseLivraison VALUES(?,?);
 INSERT INTO AdresseLivraison VALUES(?);
+
+-- Si le client possède déjà des adresses, on les affiche pour choix.
 select AdresseLivraison from ClientAPourAdresseLivraison where emailClient = ?;
-select * from AdresseLivraison where AdresseLivraison = ?;
-select * from Client where emailClient = ?;
-select * from Commande where idCommande = ?;
-select * from Client where idClient = ?;
+
+-- Insertion de la commande.
+INSERT INTO Commande VALUES(?,TO_DATE(?, 'YYYY-MM-DD'),TO_DATE(?, 'HH24:MI:SS'),?,?,?);
+
+-- Si la commande est en boutique.
+INSERT INTO CommandeenBoutique VALUES(?,'En preparation');
+
+-- Si elle est à livrer.
+INSERT INTO CommandeaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?);
+
+-- Commit de l'ajout de la commande.
+COMMIT;
+
+-- Comptages pour déterminer idCommande, idClient, numLigneP, numLigneC.
 SELECT COUNT(*) FROM ClientAnonyme;
 SELECT COUNT(*) FROM Commande;
 SELECT COUNT(*) FROM LigneCommandeProduit;
 SELECT COUNT(*) FROM LigneCommandeContenant;
-INSERT INTO Commande VALUES(?,TO_DATE(?, 'YYYY-MM-DD'),TO_DATE(?, 'HH24:MI:SS'),?,?,?,null);
+
+-- Verrouillage des produits en stock et des contenants.
+SELECT * FROM LOTPRODUIT 
+where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? 
+FOR UPDATE WAIT 30;
+
+SELECT * FROM LOTCONTENANT where idContenant = ? FOR UPDATE WAIT 30;
+
+-- Récupère les informations nécessaires à l’insertion des lignes de commande (produit stock, produit sur commande, contenants).
+SELECT PrixVentePTTC,DateReceptionP,QuantiteDisponibleP FROM LotProduit 
+where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? 
+and QuantiteDisponibleP != 0 and DatePeremption >= TO_DATE(?, 'YYYY-MM-DD') 
+ORDER BY DatePeremption ASC;
+
+SELECT PrixVentePTTC,DateReceptionP,QuantiteDisponibleP FROM LotProduit 
+where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?;
+
+SELECT DateReceptionC,QuantiteDisponibleC,PrixVenteCTTC 
+FROM LotContenant where idContenant = ? and QuantiteDisponibleC != 0 ;
+
+-- Insertion des lignes produit et contenant dans la commande.
 INSERT INTO LigneCommandeProduit VALUES(?,?,?,?,?,TO_DATE(?, 'YYYY-MM-DD'),?,?,?);
 INSERT INTO LigneCommandeContenant VALUES(?,?,?,TO_DATE(?, 'YYYY-MM-DD'),?,?,?);
-SELECT PrixVentePTTC,DateReceptionP,QuantiteDisponibleP FROM LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? and DatePeremption >= TO_DATE(?, 'YYYY-MM-DD') ORDER BY DatePeremption ASC;
-SELECT PrixVentePTTC,DateReceptionP,QuantiteDisponibleP FROM LotProduit where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ?;
-SELECT DateReceptionC,QuantiteDisponibleC,PrixVenteCTTC FROM LotContenant where idContenant = ?;
-SELECT DISTINCT ModeConditionnement from LotProduit where idProduit = ?;
-INSERT INTO CommandeenBoutique VALUES(?,'En preparation');
-INSERT INTO CommandeaLivrer VALUES(?,'En preparation',?,TO_DATE(?, 'YYYY-MM-DD'),?);
-SELECT * FROM LOTPRODUIT where idProduit = ? and ModeConditionnement = ? and PoidsUnitaire = ? FOR UPDATE WAIT 30;
-SELECT * FROM LOTCONTENANT where idContenant = ? FOR UPDATE WAIT 30;
+
+
 
 -- Statement.java
 SELECT p.IDPRODUIT, p.NOMPRODUIT, p.CATEGORIEPRODUIT, p.DESCRIPTIONPRODUIT, p.IDPRODUCTEUR, TO_CHAR(ps.DateDebut, 'DD/MM/YYYY') || ' - ' || TO_CHAR(ps.DateFin, 'DD/MM/YYYY') AS Saison_Disponibilite FROM Produit p JOIN ProduitAPourSaison ps ON p.IdProduit = ps.IdProduit;

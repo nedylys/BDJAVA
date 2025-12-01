@@ -87,41 +87,8 @@ public class StatementCommande{
         this.scan = scan;
     }
    
-    public double calculePrixProduit(int idProduit, double quantite,String ModeConditionnement){
-        // Retourne le prix d'une commande d'un produit
-        try{
-        PreparedStatement stmt = conn.prepareStatement(STPrixProduit);
-        stmt.setInt(1, idProduit);
-        ResultSet rset = stmt.executeQuery();
-        rset.next();
-        double prix = rset.getDouble(1);
-        rset.close();
-        stmt.close();
-        return prix*quantite;
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return 0;
-      }
-    }
-    public double calculePrixContenant(int idContenant, int quantite){
-        // Retourne le prix d'une commande d'un contenant
-        try{
-            PreparedStatement stmt = conn.prepareStatement(STPrixContenant);
-            stmt.setInt(1, idContenant);
-            ResultSet rset = stmt.executeQuery();
-            rset.next();
-            double prix = rset.getDouble(1);
-            rset.close();
-            stmt.close();
-            return prix*quantite;
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return 0;
-      }
-    }
     public void getModeConditionnement(int idProduit){
+    // Retourn les Modes de Conditionnement à partir de l'idProduit.
         try{
             PreparedStatement stmt = conn.prepareStatement(STMODECONDITIONNEMENT);
             stmt.setInt(1, idProduit);
@@ -137,7 +104,9 @@ public class StatementCommande{
             e.printStackTrace(System.err);
       }
     }
+
     public boolean verifieDispoSaison(int idProduit){
+    // Verifie si le produit est disponible selon la saison
         try{
             PreparedStatement stmt1 = conn.prepareStatement(STSaison);
             stmt1.setInt(1, idProduit);
@@ -164,7 +133,7 @@ public class StatementCommande{
       }
     }
     public boolean getDispo(int idProduit,double quantite,String ModeConditionnement,double poidsUnitaire){
-    // Verfie si le produit en stock peut être obtenu
+    // Verfie si la quantité demandée pour un produit en stock est disponible.
     try{
         java.util.Date now = new java.util.Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -180,7 +149,7 @@ public class StatementCommande{
         rset2.close();
         stmt2.close();
         if (qtedispo < quantite){
-            System.out.println("Quantité insuffisante");
+            System.out.println("Quantité insuffisante !");
             System.out.println("La quantite disponible est " + qtedispo);
             return false;
         }else{
@@ -193,6 +162,7 @@ public class StatementCommande{
       }
     }
     public int getDelaiDispo(int idProduit){
+    // Retourne le délai de disponibilité pour un produit sur commande.
       try{
         PreparedStatement stmt = conn.prepareStatement(STDelai);
         stmt.setInt(1, idProduit);
@@ -207,11 +177,11 @@ public class StatementCommande{
       }
     }
     public void choisirPoidsUnitaire(int idProduit){
+    // Affiche les différents PoidsUnitaire pour un produit en préconditionné.
         try{
             PreparedStatement stmt = conn.prepareStatement(STVERIFPOIDS);
             stmt.setInt(1, idProduit);
             ResultSet rset = stmt.executeQuery();
-            ArrayList<Double> listePoids = new ArrayList<>();
             while (rset.next()){
                 double poids = rset.getDouble(1);
                 System.out.println(poids);
@@ -245,7 +215,7 @@ public class StatementCommande{
         }
     }
     public boolean verifieIdProduit(int id){
-    // Verifie que l'idProduit ou idContenant existe dans la base de données.
+    // Verifie que l'idProduit existe dans la base de données.
         try{
             PreparedStatement stmt = conn.prepareStatement(STVerifieIDProduit);
             stmt.setInt(1, id);
@@ -255,7 +225,7 @@ public class StatementCommande{
                 stmt.close();
                 return true;
             }else{
-                System.out.println("L'IdProduit est faux");
+                System.out.println("L'IdProduit est faux !");
                 rset.close();
                 stmt.close();
                 return false;
@@ -298,7 +268,7 @@ public class StatementCommande{
                 stmt.close();
                 return true;
             }else{
-                System.out.println("L'IdContenant est faux");
+                System.out.println("L'IdContenant est faux !");
                 rset.close();
                 stmt.close();
                 return false;
@@ -331,7 +301,7 @@ public class StatementCommande{
         } 
     }
     public boolean getDispoContenant(int idContenant,int quantite){
-    // Verfie si le contenant peut être obtenu
+    // Verfie si la quantité demandée pour un contenant peut etre obtenue.
     try{
         PreparedStatement stmt = conn.prepareStatement(STQteContenant);
         stmt.setInt(1, idContenant);
@@ -354,14 +324,15 @@ public class StatementCommande{
       }
     }
     public int nbClient(){
-    // Retourn le nb d'ID client dans la base de données
+    // Retourn le nb d'ID client dans la base de données.
         try{
         PreparedStatement stmt = conn.prepareStatement(STNBIDCLIENT);
         ResultSet rset = stmt.executeQuery();
         rset.next();
         int nbIdclient = rset.getInt(1);
         while (this.verfieIdClient(nbIdclient)){
-            nbIdclient += 1; // Afin d'éviter les problèmes
+            nbIdclient += 1; // Afin d'éviter les problèmes de constraint unique key
+                            // (En réalité ça doit jamais arriver mais on sait jamais)
         }
         rset.close();
         stmt.close();
@@ -373,50 +344,19 @@ public class StatementCommande{
       }
     }
     public int nbIdCommande(){
-    // Retourn le nb d'ID commande dans la base de données
+    // Retourn le nb d'ID commande dans la base de données.
         try{
         PreparedStatement stmt = conn.prepareStatement(STNBIDCOMMANDE);
         ResultSet rset = stmt.executeQuery();
         rset.next();
         int nbCommande = rset.getInt(1);
         while (this.verifieIdCommande(nbCommande)){
-            nbCommande +=1;
+            nbCommande +=1; // Afin d'éviter les problèmes de constraint de unique key
+                            // (En réalité ça doit jamais arriver mais on sait jamais)
         }
         rset.close();
         stmt.close();
         return nbCommande;
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return 0;
-      }
-    }
-    public int nbLigneP(){
-    // Retourn le nb de lignes de commandeP dans la base de données
-        try{
-        PreparedStatement stmt = conn.prepareStatement(STNBLIGNEP);
-        ResultSet rset = stmt.executeQuery();
-        rset.next();
-        int nbLigneP = rset.getInt(1);
-        rset.close();
-        stmt.close();
-        return nbLigneP;
-      }catch (SQLException e) {
-            System.err.println("failed");
-            e.printStackTrace(System.err);
-            return 0;
-      }
-    }
-    public int nbLigneContenant(){
-    // Retourn le nb de lignes de commandeContenant dans la base de données
-        try{
-        PreparedStatement stmt = conn.prepareStatement(STNBLIGNEC);
-        ResultSet rset = stmt.executeQuery();
-        rset.next();
-        int nbLigneC = rset.getInt(1);
-        rset.close();
-        stmt.close();
-        return nbLigneC;
       }catch (SQLException e) {
             System.err.println("failed");
             e.printStackTrace(System.err);
@@ -445,14 +385,15 @@ public class StatementCommande{
       }
     } 
     public void ajouteNovClientAnonyme(int idClient){
+    // Ajout d'un client dans la table ClientANonyme.
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVCLIENTANONYME);
         stmt.setInt(1,idClient);
         int nbAjout = stmt.executeUpdate();
         if (nbAjout == 1){
-            System.out.println("Le clientAnonyme a bien été ajouté dans la base de données");
+            System.out.println("Le clientAnonyme a bien été ajouté dans la base de données !");
         } else{
-            System.out.println("Echec de l'opération le clientAnonyme n'a pas été ajouté ");
+            System.out.println("Echec de l'opération le clientAnonyme n'a pas été ajouté !");
         }
         stmt.close();
       }catch (SQLException e) {
@@ -461,6 +402,7 @@ public class StatementCommande{
       }
     }
     public void ajouteNovClient(String[] argsClient,int idClient){
+        // Ajout d'un client dans la table Client.
     try{
         PreparedStatement stmt = conn.prepareStatement(STNvClient);
         for (int i = 0; i<4;i++){
@@ -470,9 +412,9 @@ public class StatementCommande{
         this.ajouteNovClientAnonyme(idClient);
         int nbAjout = stmt.executeUpdate();
         if (nbAjout == 1){
-            System.out.println("Le client a bien été ajouté dans la base de données");
+            System.out.println("Le client a bien été ajouté dans la base de données !");
         } else{
-            System.out.println("Echec de l'opération le client n'a pas été ajouté ");
+            System.out.println("Echec de l'opération le client n'a pas été ajouté !");
         }
         stmt.close();
       }catch (SQLException e) {
@@ -481,6 +423,7 @@ public class StatementCommande{
       }
     }
     public boolean verifieAdresseExist(String adresse){
+    // Verfie si une adresse existe deja dans la table AdresseLivraison
     try{
         PreparedStatement stmt = conn.prepareStatement(STVERIFIEADRESSEXISTE);
         stmt.setString(1, adresse);
@@ -501,6 +444,7 @@ public class StatementCommande{
       }
     }
     public boolean verifieEmailExist(String emailClient){
+    // Verfie si un email(Client) existe dans la table Client.
     try{
         PreparedStatement stmt = conn.prepareStatement(STVERIFIEEMAILEXIST);
         stmt.setString(1, emailClient);
@@ -521,6 +465,8 @@ public class StatementCommande{
       }
     }
     public void ajouteNovAdresseClient(String adresseClient,String emailClient){
+    // On ajoute la nouvelle adresse si elle n'existe pas dans la base
+    // Et on la relie au client avec l'insertion dans ClientApourAdressedeLIvraison.
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVADRESSE);
         PreparedStatement stmt2 = conn.prepareStatement(STNVADRESSECLIENT);
@@ -529,16 +475,21 @@ public class StatementCommande{
             stmt.setString(1,adresseClient);
             nbAjout = stmt.executeUpdate();
             System.out.println("Nouvelle adresse dans la base !");
+            if (nbAjout == 1){
+                System.out.println("L'adresse a bien été ajoutée !");
+            }else{
+                System.out.println("Echec, l'adresse n'a pas pu être ajoutée !");
+            }
         } else{
             System.out.println("Cette adresse existe déja dans la base !");
         }
         stmt2.setString(1,emailClient);
         stmt2.setString(2, adresseClient);
         int nbAjout2 = stmt2.executeUpdate();
-        if (nbAjout2 + nbAjout == 2){
-            System.out.println("L'adresse a bien été ajoutée ");
+        if (nbAjout2 == 1){
+            System.out.println("L'adresse a bien été reliée avec le client !");
         }else{
-            //System.out.println("Echec de l'ajout");
+            System.out.println("Echec, l'adresse n'a pas pu être reliée au Client !");
         }
         stmt.close();
         stmt2.close();
@@ -548,7 +499,7 @@ public class StatementCommande{
       }
     }
     public ArrayList<String> getAdresseClient(String emailClient){
-    // Retourne les adressesLivraison d'un client à partir de son idClient
+    // Retourne les adressesLivraison d'un client à partir de son emailClient
     try{
         PreparedStatement stmt = conn.prepareStatement(STGETADRESS);
         stmt.setString(1,emailClient);
@@ -571,6 +522,7 @@ public class StatementCommande{
       }
     }
     public void creeCommande(int idCommande,int idClient,String[] argsCommande){
+    // On insère une nouvelle ligne dans la table Commande.
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVCOMMANDE);
         stmt.setInt(1,idCommande);
@@ -585,6 +537,11 @@ public class StatementCommande{
         stmt.setString(5, argsCommande[1]);
         stmt.setInt(6, idClient);
         int nbAjout = stmt.executeUpdate();
+        if(nbAjout == 1){
+            System.out.println("La commande a bien été créee !");
+        } else{
+            System.out.println("Echec de l'ajout de la commande !");
+        }
         stmt.close();
       }catch (SQLException e) {
             System.err.println("failed");
@@ -592,10 +549,16 @@ public class StatementCommande{
       }
     }
     public void commandeBoutique(int idCommande){
+        // On insère une nouvelle ligne dans la table CommandeBoutique.
     try{
         PreparedStatement stmt = conn.prepareStatement(STCOMMBOUTIQUE);
         stmt.setInt(1,idCommande);
         int nbAjout = stmt.executeUpdate();
+        if(nbAjout == 1){
+            System.out.println("La commandeEnBoutique a bien été créee !");
+        } else{
+            System.out.println("Echec de l'ajout de la commandeEnBoutique !");
+        }
         stmt.close();
       }catch (SQLException e) {
             System.err.println("failed");
@@ -603,14 +566,15 @@ public class StatementCommande{
       }
     }
     public void commandeLivrer(int idCommande,double fraisLivraison,String[] argsLivraison){
-    try{
+    // On insère une nouvelle ligne dans la table CommandeLiver.
+        try{
         PreparedStatement stmt = conn.prepareStatement(STCOMMLIVRER);
         stmt.setInt(1,idCommande);
         stmt.setDouble(2, fraisLivraison);
         stmt.setString(3, argsLivraison[0]);
         stmt.setString(4, argsLivraison[1]);
         int nbAjout = stmt.executeUpdate();
-        if (nbAjout > 0){
+        if (nbAjout == 1){
             System.out.println("La création de la CommandeLivrer a bien été réussie");
         }else{
             System.out.println("Echec de la création de la CommandeLivrer");
@@ -622,6 +586,7 @@ public class StatementCommande{
       }
     }
     public void ajouteCommandeP(int[] argsCommandeP,String ModeConditionnement,double[] argsDouble,String date,double PoidsUnitaire){
+    // On ajoute une ligne dans la table LigneCommandeProduit
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVLIGNEP);
         for (int i = 0; i<3;i++){
@@ -634,6 +599,11 @@ public class StatementCommande{
         stmt.setDouble(8, argsDouble[1]);
         stmt.setDouble(9, argsDouble[2]);
         int nbAjout = stmt.executeUpdate();
+        if (nbAjout == 1){
+            System.out.println("La LigneCommandeProduit a bien été ajoutée");
+        } else{
+            System.out.println("Echec la LigneCommandeProduit n'a pas pu être ajoutée ");
+        }
         stmt.close();
       }catch (SQLException e) {
             System.err.println("failed");
@@ -641,6 +611,7 @@ public class StatementCommande{
       }
     }
     public void ajouteCommandeC(int[] argsCommandeC,double[] argsDouble,String date,int quantiteC){
+    // Ajout d'une ligne dans la table LigneCommandeContenant
     try{
         PreparedStatement stmt = conn.prepareStatement(STNVLIGNEC);
         for (int i = 0; i<3;i++){
@@ -651,6 +622,11 @@ public class StatementCommande{
         stmt.setDouble(6, argsDouble[0]);
         stmt.setDouble(7, argsDouble[1]);
         int nbAjout = stmt.executeUpdate();
+        if (nbAjout == 1){
+            System.out.println("La LigneCommandeContenant a bien été ajoutée");
+        } else{
+            System.out.println("Echec la LigneCommandeContenant n'a pas pu être ajoutée ");
+        }
         stmt.close();
       }catch (SQLException e) {
             System.err.println("failed");
@@ -658,6 +634,7 @@ public class StatementCommande{
       }
     }
     public void ajouteCommandeGlobalP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
+    // Gestion de la commande Globale d'un produit en stock
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTP);
         stmt.setInt(1,argsCommandeP[2]);
@@ -673,7 +650,7 @@ public class StatementCommande{
             argsCommandeP[0]++;
             double qtedispo = rset.getDouble(3);
             if (qtedispo == 0){
-                continue;
+                continue; // Enlever les lots dont la quanité est nulle
             }
             double prix = rset.getDouble(1);
             java.util.Date date = rset.getDate(2);
@@ -693,7 +670,8 @@ public class StatementCommande{
       }
     }
     public void ajouteCommandeGlobalCommandeP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
-        try{
+    // Gestion de la commande Globale d'un produit sur commande    
+    try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTPCOMMANDE);
         stmt.setInt(1,argsCommandeP[2]);
         stmt.setString(2, ModeConditionnement);
@@ -716,7 +694,8 @@ public class StatementCommande{
       }
     }
     public double retourneprixGlobalCommandeP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
-        try{
+    // Retourne le prix d'une commande d'un produit donné sur commande.    
+    try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTPCOMMANDE);
         stmt.setInt(1,argsCommandeP[2]);
         stmt.setString(2, ModeConditionnement);
@@ -735,7 +714,8 @@ public class StatementCommande{
       }
     }
     public double retournePrixCommandeP(int[] argsCommandeP,String ModeConditionnement,double quantiteP,double PoidsUnitaire){
-        try{
+    // Retourne le prix d'une commande d'un produit donné en stock.      
+    try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTP);
         stmt.setInt(1,argsCommandeP[2]);
         stmt.setString(2, ModeConditionnement);
@@ -767,6 +747,7 @@ public class StatementCommande{
       }
     }
     public double retournePrixCommandeC(int[] argsCommandeC,int quantiteC){
+    // Retourne le prix d'une commande d'un contenant.  
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
         stmt.setInt(1,argsCommandeC[2]);
@@ -792,6 +773,7 @@ public class StatementCommande{
       }
     }       
     public void ajouteCommandeGlobalC(int[] argsCommandeC,int quantiteC){
+    // Gestion de la commande globale d'un contenant donné.
         try{
         PreparedStatement stmt = conn.prepareStatement(STCARACTC);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -822,6 +804,7 @@ public class StatementCommande{
       }
     }
 public boolean lockP(int idProduit, String ModeConditionnement, double poidsUnitaire) {
+    // Verouillage d'un produit. On verouille toute les lignes LotProduit du produit donné.
     try {
         PreparedStatement stmtLock = conn.prepareStatement(STLOCKP);
         stmtLock.setInt(1, idProduit);
@@ -869,6 +852,7 @@ public boolean lockP(int idProduit, String ModeConditionnement, double poidsUnit
     }
 }
 public boolean lockC(int idContenant) {
+    // Verouillage d'un contenant. On verouille toute les lignes LotContant du contenant donné.
     try {
         PreparedStatement stmtLock = conn.prepareStatement(STLOCKC);
         stmtLock.setInt(1, idContenant);
