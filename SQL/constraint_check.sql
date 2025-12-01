@@ -13,3 +13,9 @@ SELECT constraint_name
 FROM user_constraints
 WHERE table_name = 'PRODUIT'
   AND constraint_type = 'C'; -- 'C' is for check
+
+-- Pour déterminer le nom d'une contrainte primary key
+SELECT constraint_name
+FROM user_constraints
+WHERE table_name = 'COMMANDEAPOURRECUP'
+ AND constraint_type = 'P'; -- 'P' is for primary
