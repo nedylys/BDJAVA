@@ -51,7 +51,6 @@ CREATE TABLE Produit(
     CONSTRAINT fk_produit_producteur
         FOREIGN KEY (idProducteur) 
         REFERENCES Producteur(idProducteur)
-        
         ON DELETE CASCADE
 );
 
@@ -108,7 +107,7 @@ CREATE TABLE AdresseLivraison(
 );
 
 CREATE TABLE ClientAPourAdresseLivraison(
-    emailClient VARCHAR2(30),
+    emailClient VARCHAR2(255),
     AdresseLivraison VARCHAR2(255),
     PRIMARY KEY (emailClient, AdresseLivraison),
     CONSTRAINT fk_email_client
@@ -268,7 +267,7 @@ CREATE TABLE PerteContenant(
     DateReceptionC DATE,
     DatePerteC DATE,
     QuantitePerdueC INT CHECK (QuantitePerdueC > 0),
-    NaturePerteP VARCHAR2(255) CHECK (NaturePerteP IN ('vol','casse')),
+    NaturePerteC VARCHAR2(255) CHECK (NaturePerteP IN ('vol','casse')),
     PRIMARY KEY (idPerteC),
     CONSTRAINT fk_perte_contenant_lot
         FOREIGN KEY (DateReceptionC, idContenant) 
